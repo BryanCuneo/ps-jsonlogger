@@ -1,48 +1,45 @@
 enum Levels {
     INFO
-    WARN
-    ERR
+    WARNING
+    ERROR
     DEBUG
     VERBOSE
 }
 
 class LogEntry {
-    $timestamp = (Get-Date).ToString("o")
-
-    [ValidateSet("INFO", "WARN", "ERR", "DEBUG", "VERBOSE")]
+    [string]$timestamp = (Get-Date).ToString("o")
     [string]$level
-
     [string]$message
-    [string]$calledFrom
 
     # PS has no constructor chaining, so we use hidden init functions instead
-    hidden init([string]$level, [string]$message, [string]$calledFrom) { $this.Init($level, $message, $calledFrom, $false, $null) }
-    hidden init([string]$level, [string]$message, [string]$calledFrom, [object]$contextObject) { $this.Init($level, $message, $calledFrom, $false, $contextObject) }
-    hidden init([string]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack) { $this.Init($level, $message, $calledFrom, $includeCallStack, $null) }
-    hidden init([string]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack, [object]$contextObject) {
-        $this.level = $level
+    hidden init([Levels]$level, [string]$message, [string]$calledFrom) { $this.Init($level, $message, $calledFrom, $false, $null) }
+    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [object]$contextObject) { $this.Init($level, $message, $calledFrom, $false, $contextObject) }
+    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack) { $this.Init($level, $message, $calledFrom, $includeCallStack, $null) }
+    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack, [object]$contextObject) {
+        $this.level = [Levels].GetEnumName($level)
         $this.message = $message
-        $this.calledFrom = $calledFrom
 
         if ($null -ne $contextObject) {
             $this | Add-Member -MemberType NoteProperty -Name "contextObject" -Value $contextObject
         }
 
-        if ($this.level -like [Levels]::VERBOSE -or $includeCallStack) {
+        $this | Add-Member -MemberType NoteProperty -Name "calledFrom" -Value $calledFrom
+
+        if ($this.level -eq [Levels]::VERBOSE -or $includeCallStack) {
             $this | Add-Member -MemberType NoteProperty -Name "callStack" -Value ([string](Get-PSCallStack))
         }
     }
 
-    LogEntry([string]$level, [string]$message, [string]$calledFrom) {
+    LogEntry([Levels]$level, [string]$message, [string]$calledFrom) {
         $this.Init($level, $message, $calledFrom)
     }
-    LogEntry([string]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack) {
+    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack) {
         $this.Init($level, $message, $calledFrom, $includeCallStack)
     }
-    LogEntry([string]$level, [string]$message, [string]$calledFrom, [object]$obj) {
+    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [object]$obj) {
         $this.Init($level, $message, $calledFrom, $obj)
     }
-    LogEntry([string]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack, [object]$obj) {
+    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack, [object]$obj) {
         $this.Init($level, $message, $calledFrom, $includeCallStack, $obj)
     }
 }
@@ -88,7 +85,7 @@ class JsonLogger {
         }
     }
 
-    [void] Log([string]$level, [string]$message, [switch]$includeCallStack, [object]$contextObject) {
+    [void] Log([Levels]$level, [string]$message, [switch]$includeCallStack, [object]$contextObject) {
 
         if ([string]::IsNullOrEmpty($this.CalledFrom)) {
             $this.CalledFrom = (Get-PSCallStack)[1].ToString()
@@ -112,23 +109,23 @@ class JsonLogger {
         Add-Content -Path $this.LogFilePath -Value $jsonEntryJson
     }
 
-    [void] Log([string]$level, [string]$message) {
+    [void] Log([Levels]$level, [string]$message) {
         $this.CalledFrom = (Get-PSCallStack)[1].ToString()
 
-        $this.Log([string]$level, $message, $null)
+        $this.Log([Levels]$level, $message, $null)
     }
 
-    [void] Log([string]$level, [string]$message, [object]$callStackOrContext) {
+    [void] Log([Levels]$level, [string]$message, [object]$callStackOrContext) {
         if ([string]::IsNullOrEmpty($this.CalledFrom)) {
             $this.CalledFrom = (Get-PSCallStack)[1].ToString()
         }
 
         if ($null -eq $callStackOrContext -or $callStackOrContext.GetType().Name -ne "Boolean") {
-            # [object]contextObject
+            # Contexct object found
             $this.Log($level, $message, $false, $callStackOrContext)
         }
-        elseif ($callStackOrContext.GetType().Name -eq "Boolean") {
-            # [switch]$includeCallStack
+        else {
+            # Boolean found
             $this.Log($level, $message, $callStackOrContext, $null)
         }
 
