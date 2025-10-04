@@ -6,6 +6,18 @@ enum Levels {
     VERBOSE
 }
 
+enum Encodings {
+    ascii
+    bigendianunicode
+    oem
+    unicode
+    utf7
+    utf8
+    utf8BOM
+    utf8NoBOM
+    utf32
+}
+
 class LogEntry {
     [string]$timestamp = (Get-Date).ToString("o")
     [string]$level
@@ -45,7 +57,6 @@ class LogEntry {
 }
 
 class JsonLogger {
-    [ValidateSet("ascii", "bigendianunicode", "oem", "unicode", "utf7", "utf8", "utf8BOM", "utf8NoBOM", "utf32")]
     [string]$Encoding
 
     [switch]$Overwrite
@@ -58,8 +69,8 @@ class JsonLogger {
     # have to keep track of the function that called Log() in a variable here
     [string]$CalledFrom
 
-    JsonLogger([string]$logFilePath, [string]$encoding = "utf8BOM", [switch]$overwrite = $false, [string]$programName) {
-        $this.Encoding = $encoding
+    JsonLogger([string]$logFilePath, [Encodings]$encoding = [Encodings]::utf8BOM, [switch]$overwrite = $false, [string]$programName) {
+        $this.Encoding = [Encodings].GetEnumName($encoding)
         $this.Overwrite = $overwrite
         $this.LogFilePath = $logFilePath
 
@@ -132,7 +143,7 @@ class JsonLogger {
         }
 
         $this.CalledFrom = ""
-        Add-Content -Path $this.LogFilePath -Value $jsonEntryJson -ErrorAction Stop
+        Add-Content -Path $this.LogFilePath -Value $jsonEntryJson -Encoding $this.Encoding -ErrorAction Stop
     }
 }
 
@@ -142,8 +153,7 @@ function New-JsonLogger {
         [string]$LogFilePath,
 
         [Parameter(Mandatory = $false)]
-        [ValidateSet("ascii", "bigendianunicode", "oem", "unicode", "utf7", "utf8", "utf8BOM", "utf8NoBOM", "utf32")]
-        [string]$Encoding = "utf8BOM",
+        [Encodings]$Encoding = [Encodings]::utf8BOM,
 
         [Parameter(Mandatory = $false)]
         [switch]$Overwrite = $false,
