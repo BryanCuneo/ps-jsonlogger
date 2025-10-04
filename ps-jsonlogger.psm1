@@ -25,9 +25,9 @@ class LogEntry {
 
     # PS has no constructor chaining, so we use hidden init functions instead
     hidden init([Levels]$level, [string]$message, [string]$calledFrom) { $this.Init($level, $message, $calledFrom, $null, $false) }
-    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [object[]]$context) { $this.Init($level, $message, $calledFrom, $context, $false) }
-    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack) { $this.Init($level, $message, $calledFrom, $null, $includeCallStack) }
-    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [object[]]$context, [switch]$includeCallStack) {
+    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [array]$context) { $this.Init($level, $message, $calledFrom, $context, $false) }
+    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [boolean]$includeCallStack) { $this.Init($level, $message, $calledFrom, $null, $includeCallStack) }
+    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [array]$context, [boolean]$includeCallStack) {
         $this.level = [Levels].GetEnumName($level)
         $this.message = $message
 
@@ -45,13 +45,13 @@ class LogEntry {
     LogEntry([Levels]$level, [string]$message, [string]$calledFrom) {
         $this.Init($level, $message, $calledFrom)
     }
-    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack) {
+    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [boolean]$includeCallStack) {
         $this.Init($level, $message, $calledFrom, $includeCallStack)
     }
-    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [object[]]$context) {
+    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [array]$context) {
         $this.Init($level, $message, $calledFrom, $context)
     }
-    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [object[]]$context, [switch]$includeCallStack) {
+    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [array]$context, [boolean]$includeCallStack) {
         $this.Init($level, $message, $calledFrom, $context, $includeCallStack)
     }
 }
@@ -59,7 +59,7 @@ class LogEntry {
 class JsonLogger {
     [string]$Encoding
 
-    [switch]$Overwrite
+    [boolean]$Overwrite
     [string]$LogFilePath
     [string]$ProgramName
 
@@ -69,7 +69,7 @@ class JsonLogger {
     # have to keep track of the function that called Log() in a variable here
     [string]$CalledFrom
 
-    JsonLogger([string]$logFilePath, [Encodings]$encoding = [Encodings]::utf8BOM, [switch]$overwrite = $false, [string]$programName) {
+    JsonLogger([string]$logFilePath, [Encodings]$encoding = [Encodings]::utf8BOM, [boolean]$overwrite = $false, [string]$programName) {
         $this.Encoding = [Encodings].GetEnumName($encoding)
         $this.Overwrite = $overwrite
         $this.LogFilePath = $logFilePath
@@ -103,14 +103,14 @@ class JsonLogger {
         $this.Log($level, $message, $null, $false)
     }
 
-    [void] Log([Levels]$level, [string]$message, [object[]]$context) {
-        $this.CalledFrom = (Get-PSCallStack)[1].ToString()
-        $this.Log($level, $message, $context, $false)
-    }
-
-    [void] Log([Levels]$level, [string]$message, [switch]$includeCallStack) {
+    [void] Log([Levels]$level, [string]$message, [boolean]$includeCallStack) {
         $this.CalledFrom = (Get-PSCallStack)[1].ToString()
         $this.Log($level, $message, $null, $includeCallStack)
+    }
+
+    [void] Log([Levels]$level, [string]$message, [array]$context) {
+        $this.CalledFrom = (Get-PSCallStack)[1].ToString()
+        $this.Log($level, $message, $context, $false)
     }
 
     # [void] Log([Levels]$level, [string]$message, [object]$callStackOrContext) {
@@ -128,7 +128,7 @@ class JsonLogger {
     #     }
     # }
 
-    [void] Log([Levels]$level, [string]$message, [object[]]$context, [switch]$includeCallStack) {
+    [void] Log([Levels]$level, [string]$message, [array]$context, [boolean]$includeCallStack) {
         if ($null -eq $level) {
             $this.CalledFrom = ""
             throw "Level cannot be null."
