@@ -37,10 +37,11 @@ function Test-Info {
     $level = "INFO"
     $context = [Ctx]::new("Context - INFO")
 
-    $Global:logger.Log($level, "Info test 1 - Log(`$level, `$message)")
-    $Global:logger.Log($level, "Info test 2 - Log(`$level, `$message, `$true)", $true)
-    $Global:logger.Log($level, "Info test 3 - Log(`$level, `$message, `$context)", $context)
-    $Global:logger.Log($level, "Info test 4 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
+    $Global:logger.Log("Info test 1 - Log(`$message)")
+    $Global:logger.Log($level, "Info test 2 - Log(`$level, `$message)")
+    $Global:logger.Log($level, "Info test 3 - Log(`$level, `$message, `$true)", $true)
+    $Global:logger.Log($level, "Info test 4 - Log(`$level, `$message, `$context)", $context)
+    $Global:logger.Log($level, "Info test 5 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
 }
 
 function Test-Warning {

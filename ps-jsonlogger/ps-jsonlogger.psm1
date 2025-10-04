@@ -101,6 +101,11 @@ class JsonLogger {
         }
     }
 
+    [void] Log([string]$message) {
+        $this.CalledFrom = (Get-PSCallStack)[1].ToString()
+        $this.Log([Levels]::INFO, $message, $null, $false)
+    }
+
     [void] Log([Levels]$level, [string]$message) {
         $this.CalledFrom = (Get-PSCallStack)[1].ToString()
         $this.Log($level, $message, $null, $false)
