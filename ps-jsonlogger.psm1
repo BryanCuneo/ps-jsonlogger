@@ -63,7 +63,7 @@ class JsonLogger {
     [string]$LogFilePath
     [string]$ProgramName
 
-    [string]$JsonLoggerVersion = "0.0.1-alpha"
+    [string]$JsonLoggerVersion = "0.0.1"
 
     # Because we use "constructor chaining" and chained calls to Log(), we
     # have to keep track of the function that called Log() in a variable here
@@ -112,21 +112,6 @@ class JsonLogger {
         $this.CalledFrom = (Get-PSCallStack)[1].ToString()
         $this.Log($level, $message, $context, $false)
     }
-
-    # [void] Log([Levels]$level, [string]$message, [object]$callStackOrContext) {
-    #     if ([string]::IsNullOrEmpty($this.CalledFrom)) {
-    #         $this.CalledFrom = (Get-PSCallStack)[1].ToString()
-    #     }
-
-    #     if ($null -eq $callStackOrContext -or $callStackOrContext.GetType().Name -ne "Boolean") {
-    #         # Context object found
-    #         $this.Log($level, $message, $false, $callStackOrContext)
-    #     }
-    #     else {
-    #         # includeCallStack boolean found
-    #         $this.Log($level, $message, $callStackOrContext, $null)
-    #     }
-    # }
 
     [void] Log([Levels]$level, [string]$message, [array]$context, [boolean]$includeCallStack) {
         if ($null -eq $level) {
