@@ -18,26 +18,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-<#
-.SYNOPSIS
-    Lightweight JSON logger for PowerShell scripts that doesn't rely on any
-    additional 3rd party modules.
-
-.DESCRIPTION
-    The ps-jsonlogger module provides a small, dependency-free JSON logger
-    implemented as a class-based module. It supports several log levels and
-    writes compact JSON entries to a file. Designed to be simple to embed in
-    CI or automation scripts.
-
-.NOTES
-    Version: 0.0.1
-    Author:  Bryan Cuneo
-    Source:  https://github.com/BryanCuneo/ps-jsonlogger
-
-.EXAMPLE
-    $logger = New-JsonLogger -LogFilePath './mylog.log' -ProgramName 'MyScript'
-    $logger.Log('INFO', 'Started')
-#>
 enum Levels {
     INFO
     WARNING
@@ -103,7 +83,7 @@ class JsonLogger {
     [string]$LogFilePath
     [string]$ProgramName
 
-    [string]$JsonLoggerVersion = "0.0.1"
+    [string]$JsonLoggerVersion = "0.0.2-alpha"
 
     # Because we use "constructor chaining" and chained calls to Log(), we
     # have to keep track of the function that called Log() in a variable here

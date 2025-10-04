@@ -1,0 +1,17 @@
+TOPIC
+    about_ps-jsonlogger
+
+SYNOPSIS
+    Lightweight, dependency-free JSON logger for PowerShell scripts.
+
+LONG DESCRIPTION
+    ps-jsonlogger is a small, dependency-free JSON logger designed to be easily
+    embedded in automation scripts. It supports several log levels and writes
+    compact, structured JSON entries to disk.
+
+EXAMPLES
+    $logger = New-JsonLogger -LogFilePath './mylog.log' -ProgramName 'MyScript'
+    $logger.Log('INFO', 'Started')
+
+SEE ALSO
+    https://github.com/BryanCuneo/ps-jsonlogger/blob/main/README.md
