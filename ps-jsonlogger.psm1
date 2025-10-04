@@ -91,7 +91,7 @@ class JsonLogger {
         }
         try {
             $initialEntryJson = $initialEntry | ConvertTo-Json -Compress
-            Add-Content -Path $this.LogFilePath -Value $initialEntryJson -Encoding $this.Encoding
+            Add-Content -Path $this.LogFilePath -Value $initialEntryJson -Encoding $this.Encoding -ErrorAction Stop
         }
         catch {
             throw "Failed to convert initial log entry to JSON: $_"
@@ -119,7 +119,6 @@ class JsonLogger {
     }
 
     [void] Log([Levels]$level, [string]$message, [switch]$includeCallStack, [object]$context) {
-
         if ($null -eq $level) {
             $this.CalledFrom = ""
             throw "Level cannot be null."
@@ -133,13 +132,19 @@ class JsonLogger {
             $this.CalledFrom = (Get-PSCallStack)[1].ToString()
         }
 
-        if ($null -ne $context) {
-            $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $includeCallStack, $context)
-            $jsonEntryJson = $logEntry | ConvertTo-Json -Compress -Depth 100
+        try {
+            if ($null -ne $context) {
+                $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $includeCallStack, $context)
+                $jsonEntryJson = $logEntry | ConvertTo-Json -Compress -Depth 100
+            }
+            else {
+                $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $includeCallStack)
+                $jsonEntryJson = $logEntry | ConvertTo-Json -Compress
+            }
         }
-        else {
-            $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $includeCallStack)
-            $jsonEntryJson = $logEntry | ConvertTo-Json -Compress
+        catch {
+            $this.CalledFrom = ""
+            throw $_
         }
 
         $this.CalledFrom = ""
