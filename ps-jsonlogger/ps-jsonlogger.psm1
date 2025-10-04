@@ -43,11 +43,7 @@ class LogEntry {
     [string]$level
     [string]$message
 
-    # PS has no constructor chaining, so we use hidden init functions instead
-    hidden init([Levels]$level, [string]$message, [string]$calledFrom) { $this.Init($level, $message, $calledFrom, $null, $false) }
-    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [array]$context) { $this.Init($level, $message, $calledFrom, $context, $false) }
-    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [boolean]$includeCallStack) { $this.Init($level, $message, $calledFrom, $null, $includeCallStack) }
-    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [array]$context, [boolean]$includeCallStack) {
+    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [array]$context, [boolean]$includeCallStack) {
         $this.level = [Levels].GetEnumName($level)
         $this.message = $message
 
@@ -60,19 +56,6 @@ class LogEntry {
         if ($this.level -eq [Levels]::VERBOSE -or $includeCallStack) {
             $this | Add-Member -MemberType NoteProperty -Name "callStack" -Value ([string](Get-PSCallStack))
         }
-    }
-
-    LogEntry([Levels]$level, [string]$message, [string]$calledFrom) {
-        $this.Init($level, $message, $calledFrom)
-    }
-    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [boolean]$includeCallStack) {
-        $this.Init($level, $message, $calledFrom, $includeCallStack)
-    }
-    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [array]$context) {
-        $this.Init($level, $message, $calledFrom, $context)
-    }
-    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [array]$context, [boolean]$includeCallStack) {
-        $this.Init($level, $message, $calledFrom, $context, $includeCallStack)
     }
 }
 
@@ -153,7 +136,7 @@ class JsonLogger {
                 $jsonEntryJson = $logEntry | ConvertTo-Json -Compress -Depth 100
             }
             else {
-                $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $includeCallStack)
+                $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $null, $includeCallStack)
                 $jsonEntryJson = $logEntry | ConvertTo-Json -Compress
             }
         }
