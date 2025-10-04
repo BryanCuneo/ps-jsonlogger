@@ -13,14 +13,14 @@ class LogEntry {
 
     # PS has no constructor chaining, so we use hidden init functions instead
     hidden init([Levels]$level, [string]$message, [string]$calledFrom) { $this.Init($level, $message, $calledFrom, $false, $null) }
-    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [object]$contextObject) { $this.Init($level, $message, $calledFrom, $false, $contextObject) }
+    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [object]$context) { $this.Init($level, $message, $calledFrom, $false, $context) }
     hidden init([Levels]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack) { $this.Init($level, $message, $calledFrom, $includeCallStack, $null) }
-    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack, [object]$contextObject) {
+    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack, [object]$context) {
         $this.level = [Levels].GetEnumName($level)
         $this.message = $message
 
-        if ($null -ne $contextObject) {
-            $this | Add-Member -MemberType NoteProperty -Name "contextObject" -Value $contextObject
+        if ($null -ne $context) {
+            $this | Add-Member -MemberType NoteProperty -Name "context" -Value $context
         }
 
         $this | Add-Member -MemberType NoteProperty -Name "calledFrom" -Value $calledFrom
@@ -54,6 +54,8 @@ class JsonLogger {
 
     [string]$JsonLoggerVersion = "0.0.1-alpha"
 
+    # Because we use "constructor chaining" and chained calls to Log(), we
+    # have to keep track of the function that called Log() in a variable here
     [string]$CalledFrom
 
     JsonLogger([string]$logFilePath, [string]$encoding = "utf8BOM", [switch]$overwrite = $false, [string]$programName) {
@@ -85,33 +87,8 @@ class JsonLogger {
         }
     }
 
-    [void] Log([Levels]$level, [string]$message, [switch]$includeCallStack, [object]$contextObject) {
-
-        if ([string]::IsNullOrEmpty($this.CalledFrom)) {
-            $this.CalledFrom = (Get-PSCallStack)[1].ToString()
-        }
-
-        if ($null -eq $message -or $message.Trim() -eq "") {
-            $this.CalledFrom = ""
-            throw "Message cannot be null or empty."
-        }
-
-        if ($null -ne $contextObject) {
-            $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $includeCallStack, $contextObject)
-            $jsonEntryJson = $logEntry | ConvertTo-Json -Compress -Depth 100
-        }
-        else {
-            $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $includeCallStack)
-            $jsonEntryJson = $logEntry | ConvertTo-Json -Compress
-        }
-
-        $this.CalledFrom = ""
-        Add-Content -Path $this.LogFilePath -Value $jsonEntryJson
-    }
-
     [void] Log([Levels]$level, [string]$message) {
         $this.CalledFrom = (Get-PSCallStack)[1].ToString()
-
         $this.Log([Levels]$level, $message, $null)
     }
 
@@ -121,14 +98,41 @@ class JsonLogger {
         }
 
         if ($null -eq $callStackOrContext -or $callStackOrContext.GetType().Name -ne "Boolean") {
-            # Contexct object found
+            # Context object found
             $this.Log($level, $message, $false, $callStackOrContext)
         }
         else {
-            # Boolean found
+            # includeCallStack boolean found
             $this.Log($level, $message, $callStackOrContext, $null)
         }
+    }
 
+    [void] Log([Levels]$level, [string]$message, [switch]$includeCallStack, [object]$context) {
+
+        if ($null -eq $level) {
+            $this.CalledFrom = ""
+            throw "Level cannot be null."
+        }
+        if ([string]::IsNullOrEmpty($message)) {
+            $this.CalledFrom = ""
+            throw "Message cannot be null or empty."
+        }
+
+        if ([string]::IsNullOrEmpty($this.CalledFrom)) {
+            $this.CalledFrom = (Get-PSCallStack)[1].ToString()
+        }
+
+        if ($null -ne $context) {
+            $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $includeCallStack, $context)
+            $jsonEntryJson = $logEntry | ConvertTo-Json -Compress -Depth 100
+        }
+        else {
+            $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $includeCallStack)
+            $jsonEntryJson = $logEntry | ConvertTo-Json -Compress
+        }
+
+        $this.CalledFrom = ""
+        Add-Content -Path $this.LogFilePath -Value $jsonEntryJson -ErrorAction Stop
     }
 }
 
