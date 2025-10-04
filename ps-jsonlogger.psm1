@@ -24,10 +24,10 @@ class LogEntry {
     [string]$message
 
     # PS has no constructor chaining, so we use hidden init functions instead
-    hidden init([Levels]$level, [string]$message, [string]$calledFrom) { $this.Init($level, $message, $calledFrom, $false, $null) }
-    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [object]$context) { $this.Init($level, $message, $calledFrom, $false, $context) }
-    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack) { $this.Init($level, $message, $calledFrom, $includeCallStack, $null) }
-    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack, [object]$context) {
+    hidden init([Levels]$level, [string]$message, [string]$calledFrom) { $this.Init($level, $message, $calledFrom, $null, $false) }
+    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [object[]]$context) { $this.Init($level, $message, $calledFrom, $context, $false) }
+    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack) { $this.Init($level, $message, $calledFrom, $null, $includeCallStack) }
+    hidden init([Levels]$level, [string]$message, [string]$calledFrom, [object[]]$context, [switch]$includeCallStack) {
         $this.level = [Levels].GetEnumName($level)
         $this.message = $message
 
@@ -48,11 +48,11 @@ class LogEntry {
     LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack) {
         $this.Init($level, $message, $calledFrom, $includeCallStack)
     }
-    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [object]$obj) {
-        $this.Init($level, $message, $calledFrom, $obj)
+    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [object[]]$context) {
+        $this.Init($level, $message, $calledFrom, $context)
     }
-    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [switch]$includeCallStack, [object]$obj) {
-        $this.Init($level, $message, $calledFrom, $includeCallStack, $obj)
+    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [object[]]$context, [switch]$includeCallStack) {
+        $this.Init($level, $message, $calledFrom, $context, $includeCallStack)
     }
 }
 
@@ -100,25 +100,35 @@ class JsonLogger {
 
     [void] Log([Levels]$level, [string]$message) {
         $this.CalledFrom = (Get-PSCallStack)[1].ToString()
-        $this.Log([Levels]$level, $message, $null)
+        $this.Log($level, $message, $null, $false)
     }
 
-    [void] Log([Levels]$level, [string]$message, [object]$callStackOrContext) {
-        if ([string]::IsNullOrEmpty($this.CalledFrom)) {
-            $this.CalledFrom = (Get-PSCallStack)[1].ToString()
-        }
-
-        if ($null -eq $callStackOrContext -or $callStackOrContext.GetType().Name -ne "Boolean") {
-            # Context object found
-            $this.Log($level, $message, $false, $callStackOrContext)
-        }
-        else {
-            # includeCallStack boolean found
-            $this.Log($level, $message, $callStackOrContext, $null)
-        }
+    [void] Log([Levels]$level, [string]$message, [object[]]$context) {
+        $this.CalledFrom = (Get-PSCallStack)[1].ToString()
+        $this.Log($level, $message, $context, $false)
     }
 
-    [void] Log([Levels]$level, [string]$message, [switch]$includeCallStack, [object]$context) {
+    [void] Log([Levels]$level, [string]$message, [switch]$includeCallStack) {
+        $this.CalledFrom = (Get-PSCallStack)[1].ToString()
+        $this.Log($level, $message, $null, $includeCallStack)
+    }
+
+    # [void] Log([Levels]$level, [string]$message, [object]$callStackOrContext) {
+    #     if ([string]::IsNullOrEmpty($this.CalledFrom)) {
+    #         $this.CalledFrom = (Get-PSCallStack)[1].ToString()
+    #     }
+
+    #     if ($null -eq $callStackOrContext -or $callStackOrContext.GetType().Name -ne "Boolean") {
+    #         # Context object found
+    #         $this.Log($level, $message, $false, $callStackOrContext)
+    #     }
+    #     else {
+    #         # includeCallStack boolean found
+    #         $this.Log($level, $message, $callStackOrContext, $null)
+    #     }
+    # }
+
+    [void] Log([Levels]$level, [string]$message, [object[]]$context, [switch]$includeCallStack) {
         if ($null -eq $level) {
             $this.CalledFrom = ""
             throw "Level cannot be null."
@@ -134,7 +144,7 @@ class JsonLogger {
 
         try {
             if ($null -ne $context) {
-                $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $includeCallStack, $context)
+                $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $context, $includeCallStack)
                 $jsonEntryJson = $logEntry | ConvertTo-Json -Compress -Depth 100
             }
             else {
