@@ -1,3 +1,43 @@
+# Copyright (c) 2025 Bryan Cuneo
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+
+<#
+.SYNOPSIS
+    Lightweight JSON logger for PowerShell scripts that doesn't rely on any
+    additional 3rd party modules.
+
+.DESCRIPTION
+    The ps-jsonlogger module provides a small, dependency-free JSON logger
+    implemented as a class-based module. It supports several log levels and
+    writes compact JSON entries to a file. Designed to be simple to embed in
+    CI or automation scripts.
+
+.NOTES
+    Version: 0.0.1
+    Author:  Bryan Cuneo
+    Source:  https://github.com/BryanCuneo/ps-jsonlogger
+
+.EXAMPLE
+    $logger = New-JsonLogger -LogFilePath './mylog.log' -ProgramName 'MyScript'
+    $logger.Log('INFO', 'Started')
+#>
 enum Levels {
     INFO
     WARNING
@@ -148,6 +188,7 @@ class JsonLogger {
 }
 
 function New-JsonLogger {
+
     param (
         [Parameter(Mandatory = $true)]
         [string]$LogFilePath,
@@ -161,6 +202,39 @@ function New-JsonLogger {
         [Parameter(Mandatory = $true)]
         [string]$ProgramName
     )
+
+    <#
+    .SYNOPSIS
+        Create a new JsonLogger instance and initialize the log file.
+
+    .DESCRIPTION
+        Creates and returns an instance of the `JsonLogger` class. If the
+        target log file does not exist it will be created. If the file exists
+        and is non-empty, you can use `-Overwrite` to force initialization.
+
+    .PARAMETER LogFilePath
+        Path to the file to write log entries to.
+
+    .PARAMETER Encoding
+        File encoding to use when writing log entries.
+        Available:
+            ascii, bigendianunicode, oem, unicode, utf7, utf8, utf8BOM, utf8NoBOM, utf32
+        Default:
+            utf8BOM
+
+    .PARAMETER Overwrite
+        If specified, existing log files will be truncated/overwritten.
+
+    .PARAMETER ProgramName
+        Friendly program name included in the initial log entry written to
+        the first entry of the log.
+
+    .EXAMPLE
+        $logger = New-JsonLogger -LogFilePath './testing.log' -ProgramName 'ps-jsonlogger testing' -Overwrite
+
+    .NOTES
+        This function is exported by the module.
+    #>
 
     return [JsonLogger]::new($LogFilePath, $Encoding, $Overwrite, $ProgramName)
 }
