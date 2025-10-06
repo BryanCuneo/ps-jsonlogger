@@ -87,8 +87,9 @@ function Test-Verbose {
 function main {
     $Global:logger = New-JsonLogger `
         -LogFilePath "./testing.log" `
+        -ProgramName "ps-jsonlogger testing" `
         -Overwrite `
-        -ProgramName "ps-jsonlogger testing"
+        -WriteToHost
 
     Test-Info
     Test-Warning
