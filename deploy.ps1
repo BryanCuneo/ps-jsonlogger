@@ -32,7 +32,7 @@ $FolderPath = Resolve-Path $FolderPath
 
 $module_name = "ps-jsonlogger"
 $copyright = "(c) $(Get-Date -f "yyyy") Bryan Cuneo. Made available under the terms of the MIT License."
-$description = "ps-jsonlogger is a small, dependency-free JSON logger designed to be easily embedded in automation scripts. It supports several log levels and writes compact, structured JSON entries to disk."
+$description = "ps-jsonlogger is a small, dependency-free JSON logger designed to be easily embedded in automation scripts. It supports several log levels, context objects, full call stack inclusion, and writes compact, structured JSON entries to disk."
 $psd_path = Join-Path -Path $FolderPath -ChildPath "$module_name.psd1"
 
 $parameters = @{

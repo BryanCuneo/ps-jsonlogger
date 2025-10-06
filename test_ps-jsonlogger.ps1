@@ -37,55 +37,55 @@ function Test-Info {
     $level = "INFO"
     $context = [Ctx]::new("Context - INFO")
 
-    $Global:logger.Log("Info test 1 - Log(`$message)")
-    $Global:logger.Log($level, "Info test 2 - Log(`$level, `$message)")
-    $Global:logger.Log($level, "Info test 3 - Log(`$level, `$message, `$true)", $true)
-    $Global:logger.Log($level, "Info test 4 - Log(`$level, `$message, `$context)", $context)
-    $Global:logger.Log($level, "Info test 5 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
+    $global:logger.Log("Info test 1 - Log(`$message) (the default level is INFO)")
+    $global:logger.Log($level, "Info test 2 - Log(`$level, `$message)")
+    $global:logger.Log($level, "Info test 3 - Log(`$level, `$message, `$true)", $true)
+    $global:logger.Log($level, "Info test 4 - Log(`$level, `$message, `$context)", $context)
+    $global:logger.Log($level, "Info test 5 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
 }
 
 function Test-Warning {
     $level = "WARNING"
     $context = [Ctx]::new("Context - WARNING")
 
-    $Global:logger.Log($level, "Warning test 1 - Log(`$level, `$message)")
-    $Global:logger.Log($level, "Warning test 2 - Log(`$level, `$message, `$true)", $true)
-    $Global:logger.Log($level, "Warning test 3 - Log(`$level, `$message, `$context)", $context)
-    $Global:logger.Log($level, "Warning test 4 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
+    $global:logger.Log($level, "Warning test 1 - Log(`$level, `$message)")
+    $global:logger.Log($level, "Warning test 2 - Log(`$level, `$message, `$true)", $true)
+    $global:logger.Log($level, "Warning test 3 - Log(`$level, `$message, `$context)", $context)
+    $global:logger.Log($level, "Warning test 4 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
 }
 
 function Test-Error {
     $level = "ERROR"
     $context = [Ctx]::new("Context - ERROR")
 
-    $Global:logger.Log($level, "Error test 1 - Log(`$level, `$message)")
-    $Global:logger.Log($level, "Error test 2 - Log(`$level, `$message, `$true)", $true)
-    $Global:logger.Log($level, "Error test 3 - Log(`$level, `$message, `$context)", $context)
-    $Global:logger.Log($level, "Error test 4 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
+    $global:logger.Log($level, "Error test 1 - Log(`$level, `$message)")
+    $global:logger.Log($level, "Error test 2 - Log(`$level, `$message, `$true)", $true)
+    $global:logger.Log($level, "Error test 3 - Log(`$level, `$message, `$context)", $context)
+    $global:logger.Log($level, "Error test 4 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
 }
 
 function Test-Debug {
     $level = "DEBUG"
     $context = [Ctx]::new("Context - DEBUG")
 
-    $Global:logger.Log($level, "Debug test 1 - Log(`$level, `$message)")
-    $Global:logger.Log($level, "Debug test 2 - Log(`$level, `$message, `$true)", $true)
-    $Global:logger.Log($level, "Debug test 3 - Log(`$level, `$message, `$context)", $context)
-    $Global:logger.Log($level, "Debug test 4 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
+    $global:logger.Log($level, "Debug test 1 - Log(`$level, `$message)")
+    $global:logger.Log($level, "Debug test 2 - Log(`$level, `$message, `$true)", $true)
+    $global:logger.Log($level, "Debug test 3 - Log(`$level, `$message, `$context)", $context)
+    $global:logger.Log($level, "Debug test 4 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
 }
 
 function Test-Verbose {
     $level = "VERBOSE"
     $context = [Ctx]::new("Context - VERBOSE")
 
-    $Global:logger.Log($level, "Verbose test 1 - Log(`$level, `$message)")
-    $Global:logger.Log($level, "Verbose test 2 - Log(`$level, `$message, `$true)", $true)
-    $Global:logger.Log($level, "Verbose test 3 - Log(`$level, `$message, `$context)", $context)
-    $Global:logger.Log($level, "Verbose test 4 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
+    $global:logger.Log($level, "Verbose test 1 - Log(`$level, `$message)")
+    $global:logger.Log($level, "Verbose test 2 - Log(`$level, `$message, `$true)", $true)
+    $global:logger.Log($level, "Verbose test 3 - Log(`$level, `$message, `$context)", $context)
+    $global:logger.Log($level, "Verbose test 4 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
 }
 
 function main {
-    $Global:logger = New-JsonLogger `
+    $global:logger = New-JsonLogger `
         -LogFilePath "./testing.log" `
         -ProgramName "Test Script for ps-jsonlogger" `
         -Overwrite `
@@ -97,8 +97,8 @@ function main {
     Test-Debug
     Test-Verbose
 
-    $Global:logger.Close()
-    $Global:logger.Close("Testing Close() again with a message.")
+    $global:logger.Close()
+    $global:logger.Close("Testing Close() again with a message.")
 }
 
 main

@@ -70,7 +70,7 @@ class JsonLogger {
     [boolean]$Overwrite
     [boolean]$WriteToHost
 
-    [string]$JsonLoggerVersion = "0.0.2-alpha"
+    [string]$JsonLoggerVersion = "0.0.2"
 
     # Because we use "constructor chaining" and chained calls to Log(), we
     # have to keep track of the function that called Log() in a variable here

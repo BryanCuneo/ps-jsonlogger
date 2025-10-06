@@ -6,12 +6,23 @@ SYNOPSIS
 
 LONG DESCRIPTION
     ps-jsonlogger is a small, dependency-free JSON logger designed to be easily
-    embedded in automation scripts. It supports several log levels and writes
-    compact, structured JSON entries to disk.
+    embedded in automation scripts. It supports several log levels, context
+    objects, full call stack inclusion, and writes compact, structured JSON
+    entries to disk.
 
 EXAMPLES
-    $logger = New-JsonLogger -LogFilePath './mylog.log' -ProgramName 'MyScript'
-    $logger.Log('INFO', 'Started')
+    Import-Module ps-jsonlogger
+
+    $logger = New-JsonLogger -LogFilePath "./basic_logging_example.log" -ProgramName "Basic Logging Example"
+
+    $logger.Log("Hello, World!")
+    $logger.Log("INFO", "Info level test")
+    $logger.Log("WARNING", "Level test - warning")
+    $logger.Log("ERROR", "Level test - error")
+    $logger.Log("DEBUG", "Level test - debug")
+    $logger.Log("VERBOSE", "Level test - verbose")
+
+    $logger.Close()
 
 SEE ALSO
     https://github.com/BryanCuneo/ps-jsonlogger/blob/main/README.md

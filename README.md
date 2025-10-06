@@ -1,5 +1,5 @@
 # ps-jsonlogger
-ps-jsonlogger is a small, dependency-free JSON logger designed to be easily embedded in automation scripts. It supports several log levels and writes compact, structured JSON entries to disk.
+ps-jsonlogger is a small, dependency-free JSON logger designed to be easily embedded in automation scripts. It supports several log levels, context objects, full call stack inclusion, and writes compact, structured JSON entries to disk.
 
 ## Usage Instructions
 ### Basic usage
