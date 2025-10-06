@@ -96,6 +96,7 @@ class JsonLogger {
         $initialEntry = [ordered]@{
             ProgramName       = $this.ProgramName
             StartTime         = (Get-Date).ToString("o")
+            PowerShellVersion = $global:PSVersionTable.PSVersion.ToString()
             JsonLoggerVersion = $this.JsonLoggerVersion
         }
         try {
@@ -211,7 +212,6 @@ function New-JsonLogger {
         [Encodings]$Encoding = [Encodings]::utf8BOM,
         [switch]$Overwrite,
         [switch]$WriteToHost
-
     )
 
     <#
@@ -244,7 +244,7 @@ function New-JsonLogger {
         If specified, write a human-readable log line to the console using Write-Host.
 
     .EXAMPLE
-        $logger = New-JsonLogger -LogFilePath './testing.log' -ProgramName 'ps-jsonlogger testing' -Overwrite
+        $logger = New-JsonLogger -LogFilePath './testing.log' -ProgramName 'ps-jsonlogger testing'
 
     .NOTES
         This function is exported by the module.
