@@ -94,17 +94,18 @@ class JsonLogger {
         }
 
         $initialEntry = [ordered]@{
-            ProgramName       = $this.ProgramName
-            StartTime         = (Get-Date).ToString("o")
-            PowerShellVersion = $global:PSVersionTable.PSVersion.ToString()
-            JsonLoggerVersion = $this.JsonLoggerVersion
+            timestamp         = (Get-Date).ToString("o")
+            level             = "START"
+            programName       = $this.ProgramName
+            PSVersion         = $global:PSVersionTable.PSVersion.ToString()
+            jsonLoggerVersion = $this.JsonLoggerVersion
         }
         try {
             $initialEntryJson = $initialEntry | ConvertTo-Json -Compress
             Add-Content -Path $this.LogFilePath -Value $initialEntryJson -Encoding $this.Encoding -ErrorAction Stop
 
             if ($this.WriteToHost) {
-                Write-Host "[START][$(Get-Date $initialEntry.StartTime -f "yyyy-MM-dd HH:mm:ss")]$($this.ProgramName)"
+                Write-Host "[$($initialEntry.level)][$(Get-Date $initialEntry.timestamp -f "yyyy-MM-dd HH:mm:ss")]$($this.ProgramName)"
             }
         }
         catch {
@@ -179,8 +180,8 @@ class JsonLogger {
 
     [void] Close($message) {
         $finalEntry = [ordered]@{
-            ProgramName = $this.ProgramName
-            EndTime     = (Get-Date).ToString("o")
+            timestamp = (Get-Date).ToString("o")
+            level     = "END"
         }
 
         if (-not [string]::IsNullOrEmpty($message)) {
@@ -188,7 +189,7 @@ class JsonLogger {
         }
 
         if ($this.WriteToHost) {
-            $friendlyString = "[END][$(Get-Date $finalEntry.EndTime -f "yyyy-MM-dd HH:mm:ss")]"
+            $friendlyString = "[$($finalEntry.level)][$(Get-Date $finalEntry.timestamp -f "yyyy-MM-dd HH:mm:ss")]"
             if (-not [string]::IsNullOrEmpty($message)) {
                 $friendlyString += $message
             }
