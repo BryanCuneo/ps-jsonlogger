@@ -57,14 +57,18 @@ class LogEntry {
             $this | Add-Member -MemberType NoteProperty -Name "callStack" -Value ([string](Get-PSCallStack))
         }
     }
+
+    [string] ToString() {
+        return "[$(Get-Date $this.timestamp -f "yyy-MM-dd HH:mm:ss")][$($this.level)] - $($this.message)"
+    }
 }
 
 class JsonLogger {
-    [string]$Encoding
-
-    [boolean]$Overwrite
     [string]$LogFilePath
     [string]$ProgramName
+    [string]$Encoding
+    [boolean]$Overwrite
+    [boolean]$WriteToHost
 
     [string]$JsonLoggerVersion = "0.0.2-alpha"
 
@@ -72,10 +76,12 @@ class JsonLogger {
     # have to keep track of the function that called Log() in a variable here
     [string]$CalledFrom
 
-    JsonLogger([string]$logFilePath, [Encodings]$encoding = [Encodings]::utf8BOM, [boolean]$overwrite = $false, [string]$programName) {
+    JsonLogger([string]$logFilePath, [string]$programName, [Encodings]$encoding = [Encodings]::utf8BOM, [boolean]$overwrite = $false, [boolean]$writeToHost) {
+        $this.LogFilePath = $logFilePath
+        $this.ProgramName = $programName
         $this.Encoding = [Encodings].GetEnumName($encoding)
         $this.Overwrite = $overwrite
-        $this.LogFilePath = $logFilePath
+        $this.WriteToHost = $writeToHost
 
         if ($this.Overwrite -or -not (Test-Path -Path $this.LogFilePath)) {
             New-Item -Path $this.LogFilePath -ItemType File -Force | Out-Null
@@ -88,13 +94,17 @@ class JsonLogger {
         }
 
         $initialEntry = [ordered]@{
-            ProgramName       = $programName
+            ProgramName       = $this.ProgramName
             StartTime         = (Get-Date).ToString("o")
             JsonLoggerVersion = $this.JsonLoggerVersion
         }
         try {
             $initialEntryJson = $initialEntry | ConvertTo-Json -Compress
             Add-Content -Path $this.LogFilePath -Value $initialEntryJson -Encoding $this.Encoding -ErrorAction Stop
+
+            if ($this.WriteToHost) {
+                Write-Information "[$(Get-Date $initialEntry.StartTime -f "yyyy-MM-dd HH:mm:ss")] - Starting $($this.ProgramName)"
+            }
         }
         catch {
             throw "Failed to convert initial log entry to JSON: $_"
@@ -152,6 +162,14 @@ class JsonLogger {
 
         $this.CalledFrom = ""
         Add-Content -Path $this.LogFilePath -Value $jsonEntryJson -Encoding $this.Encoding -ErrorAction Stop
+
+        if ($this.WriteToHost) {
+            switch ($level) {
+                "WARNING" { Write-Host $logEntry.ToString() -ForegroundColor Yellow }
+                "ERROR" { Write-Host $logEntry.ToString() -ForegroundColor Red }
+                default { Write-Host $logEntry.ToString() }
+            }
+        }
     }
 }
 
@@ -161,14 +179,13 @@ function New-JsonLogger {
         [Parameter(Mandatory = $true)]
         [string]$LogFilePath,
 
-        [Parameter(Mandatory = $false)]
-        [Encodings]$Encoding = [Encodings]::utf8BOM,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$Overwrite = $false,
-
         [Parameter(Mandatory = $true)]
-        [string]$ProgramName
+        [string]$ProgramName,
+
+        [Encodings]$Encoding = [Encodings]::utf8BOM,
+        [switch]$Overwrite,
+        [switch]$WriteToHost
+
     )
 
     <#
@@ -183,6 +200,10 @@ function New-JsonLogger {
     .PARAMETER LogFilePath
         Path to the file to write log entries to.
 
+    .PARAMETER ProgramName
+        Friendly program name included in the initial log entry written to
+        the first entry of the log.
+
     .PARAMETER Encoding
         File encoding to use when writing log entries.
         Available:
@@ -193,9 +214,8 @@ function New-JsonLogger {
     .PARAMETER Overwrite
         If specified, existing log files will be truncated/overwritten.
 
-    .PARAMETER ProgramName
-        Friendly program name included in the initial log entry written to
-        the first entry of the log.
+    .PARAMETER WriteToHost
+        If specified, write a human-readable log line to the console using Write-Host.
 
     .EXAMPLE
         $logger = New-JsonLogger -LogFilePath './testing.log' -ProgramName 'ps-jsonlogger testing' -Overwrite
@@ -204,7 +224,7 @@ function New-JsonLogger {
         This function is exported by the module.
     #>
 
-    return [JsonLogger]::new($LogFilePath, $Encoding, $Overwrite, $ProgramName)
+    return [JsonLogger]::new($LogFilePath, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
 }
 
 Export-ModuleMember -Function New-JsonLogger
