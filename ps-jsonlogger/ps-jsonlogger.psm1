@@ -59,7 +59,7 @@ class LogEntry {
     }
 
     [string] ToString() {
-        return "[$(Get-Date $this.timestamp -f "yyy-MM-dd HH:mm:ss")][$($this.level)] - $($this.message)"
+        return "[$($this.level)]$($this.message)"
     }
 }
 
@@ -103,7 +103,7 @@ class JsonLogger {
             Add-Content -Path $this.LogFilePath -Value $initialEntryJson -Encoding $this.Encoding -ErrorAction Stop
 
             if ($this.WriteToHost) {
-                Write-Information "[$(Get-Date $initialEntry.StartTime -f "yyyy-MM-dd HH:mm:ss")] - Starting $($this.ProgramName)"
+                Write-Host "[$(Get-Date $initialEntry.StartTime -f "yyyy-MM-dd HH:mm:ss")] - $($this.ProgramName)"
             }
         }
         catch {
