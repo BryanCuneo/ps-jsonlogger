@@ -87,7 +87,7 @@ function Test-Verbose {
 function main {
     $Global:logger = New-JsonLogger `
         -LogFilePath "./testing.log" `
-        -ProgramName "ps-jsonlogger testing" `
+        -ProgramName "Test Script for ps-jsonlogger" `
         -Overwrite `
         -WriteToHost
 
@@ -96,6 +96,9 @@ function main {
     Test-Error
     Test-Debug
     Test-Verbose
+
+    $Global:logger.Close()
+    $Global:logger.Close("Testing Close() again with a message.")
 }
 
 main

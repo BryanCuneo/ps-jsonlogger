@@ -103,7 +103,7 @@ class JsonLogger {
             Add-Content -Path $this.LogFilePath -Value $initialEntryJson -Encoding $this.Encoding -ErrorAction Stop
 
             if ($this.WriteToHost) {
-                Write-Host "[$(Get-Date $initialEntry.StartTime -f "yyyy-MM-dd HH:mm:ss")] - $($this.ProgramName)"
+                Write-Host "[START][$(Get-Date $initialEntry.StartTime -f "yyyy-MM-dd HH:mm:ss")]$($this.ProgramName)"
             }
         }
         catch {
@@ -170,6 +170,32 @@ class JsonLogger {
                 default { Write-Host $logEntry.ToString() }
             }
         }
+    }
+
+    [void] Close() {
+        $this.Close("")
+    }
+
+    [void] Close($message) {
+        $finalEntry = [ordered]@{
+            ProgramName = $this.ProgramName
+            EndTime     = (Get-Date).ToString("o")
+        }
+
+        if (-not [string]::IsNullOrEmpty($message)) {
+            $finalEntry | Add-Member -MemberType NoteProperty -Name "Message" -Value $message
+        }
+
+        if ($this.WriteToHost) {
+            $friendlyString = "[END][$(Get-Date $finalEntry.EndTime -f "yyyy-MM-dd HH:mm:ss")]"
+            if (-not [string]::IsNullOrEmpty($message)) {
+                $friendlyString += $message
+            }
+            Write-Host $friendlyString
+        }
+
+        $finalEntryJson = $finalEntry | ConvertTo-Json -Compress
+        Add-Content -Path $this.LogFilePath -Value $finalEntryJson -Encoding $this.Encoding -ErrorAction Stop
     }
 }
 
