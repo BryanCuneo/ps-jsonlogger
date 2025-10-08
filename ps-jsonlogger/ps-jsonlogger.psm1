@@ -70,7 +70,9 @@ class JsonLogger {
     [boolean]$Overwrite
     [boolean]$WriteToHost
 
-    [string]$JsonLoggerVersion = "0.0.2"
+    [string]$JsonLoggerVersion = "1.0.0-alpha"
+    [boolean]$hasWarning = $false
+    [boolean]$hasError = $false
 
     # Because we use "constructor chaining" and chained calls to Log(), we
     # have to keep track of the function that called Log() in a variable here
@@ -113,6 +115,14 @@ class JsonLogger {
         }
     }
 
+    hidden [void] AddToInitialEntry([string]$newFieldName, [object]$value) {
+        $file = Get-Content -Path $this.LogFilePath
+        $newInitialEntry = $file[0] | ConvertFrom-Json -AsHashtable
+        $newInitialEntry.$newFieldName = $value
+        $file[0] = $newInitialEntry | ConvertTo-Json -Compress
+        $file | Set-Content -Path $this.LogFilePath
+    }
+
     [void] Log([string]$message) {
         $this.CalledFrom = (Get-PSCallStack)[1].ToString()
         $this.Log([Levels]::INFO, $message, $null, $false)
@@ -145,6 +155,15 @@ class JsonLogger {
 
         if ([string]::IsNullOrEmpty($this.CalledFrom)) {
             $this.CalledFrom = (Get-PSCallStack)[1].ToString()
+        }
+
+        if (-not $this.hasWarning -and $level -eq [Levels]::WARNING) {
+            $this.AddToInitialEntry("hasWarning", $true)
+            $this.hasWarning = $true
+        }
+        elseif (-not $this.HasError -and $level -eq [Levels]::ERROR) {
+            $this.AddToInitialEntry("hasError", $true)
+            $this.hasError = $true
         }
 
         try {
@@ -185,7 +204,7 @@ class JsonLogger {
         }
 
         if (-not [string]::IsNullOrEmpty($message)) {
-            $finalEntry | Add-Member -MemberType NoteProperty -Name "Message" -Value $message
+            $finalEntry | Add-Member -MemberType NoteProperty -Name "message" -Value $message
         }
 
         if ($this.WriteToHost) {
@@ -205,8 +224,10 @@ function New-JsonLogger {
 
     param (
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$LogFilePath,
 
+        [ValidateNotNullOrEmpty()]
         [Parameter(Mandatory = $true)]
         [string]$ProgramName,
 
