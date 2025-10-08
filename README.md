@@ -48,7 +48,7 @@ _Note: This doesn't actually delete the $logger object or otherwise close your c
 The following log levels are available: `INFO`, `WARNING`, `ERROR`, `FATAL`, `DEBUG`, `VERBOSE`. Both `FATAL` and `VERBOSE` always includes the full call stack in the log entry. Additionally, `FATAL` will close the log and call `exit 1`, terminating the script. You can specify which log level you want to use like so:
 ##### log_levels.ps1
 ```PowerShell
-Import-Module ps-jsonlogger -Force
+Import-Module ps-jsonlogger
 
 $logger = New-JsonLogger -LogFilePath "./log_levels.log" -ProgramName "Log Levels"
 
@@ -92,7 +92,7 @@ You can pass the `-WriteToHost` flag to `New-JsonLogger` and write out human-rea
 
 ##### write_to_host.ps1
 ```PowerShell
-Import-Module ps-jsonlogger -Force
+Import-Module ps-jsonlogger
 
 $logger = New-JsonLogger -LogFilePath "./write_to_host.log" -ProgramName "Write to Host" -WriteToHost
 
