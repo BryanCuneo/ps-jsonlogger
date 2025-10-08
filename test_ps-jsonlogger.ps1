@@ -51,7 +51,7 @@ function Test-Warning {
     $global:logger.Log($level, "Warning test 1 - Log(`$level, `$message)")
     $global:logger.Log($level, "Warning test 2 - Log(`$level, `$message, `$true)", $true)
     $global:logger.Log($level, "Warning test 3 - Log(`$level, `$message, `$context)", $context)
-    $global:logger.Log($level, "Warning test 4 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
+    $global:logger.Log($level, "Warning test 4 - Log(`$level, `$message, @(`$context, `$string), `$true)", @($context, "additional context here"), $true)
 }
 
 function Test-Error {
@@ -61,7 +61,7 @@ function Test-Error {
     $global:logger.Log($level, "Error test 1 - Log(`$level, `$message)")
     $global:logger.Log($level, "Error test 2 - Log(`$level, `$message, `$true)", $true)
     $global:logger.Log($level, "Error test 3 - Log(`$level, `$message, `$context)", $context)
-    $global:logger.Log($level, "Error test 4 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
+    $global:logger.Log($level, "Error test 4 - Log(`$level, `$message, @(`$context, `$string), `$true)", @($context, "additional context here"), $true)
 }
 
 function Test-Debug {
@@ -71,7 +71,7 @@ function Test-Debug {
     $global:logger.Log($level, "Debug test 1 - Log(`$level, `$message)")
     $global:logger.Log($level, "Debug test 2 - Log(`$level, `$message, `$true)", $true)
     $global:logger.Log($level, "Debug test 3 - Log(`$level, `$message, `$context)", $context)
-    $global:logger.Log($level, "Debug test 4 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
+    $global:logger.Log($level, "Debug test 4 - Log(`$level, `$message, @(`$context, `$string), `$true)", @($context, "additional context here"), $true)
 }
 
 function Test-Verbose {
@@ -81,7 +81,7 @@ function Test-Verbose {
     $global:logger.Log($level, "Verbose test 1 - Log(`$level, `$message)")
     $global:logger.Log($level, "Verbose test 2 - Log(`$level, `$message, `$true)", $true)
     $global:logger.Log($level, "Verbose test 3 - Log(`$level, `$message, `$context)", $context)
-    $global:logger.Log($level, "Verbose test 4 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
+    $global:logger.Log($level, "Verbose test 4 - Log(`$level, `$message, @(`$context, `$string), `$true)", @($context, "additional context here"), $true)
 }
 
 function Test-CloseFatal {
