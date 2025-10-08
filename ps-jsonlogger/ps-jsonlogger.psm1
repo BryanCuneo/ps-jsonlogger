@@ -127,7 +127,7 @@ class JsonLogger {
 
     hidden [void] AddToInitialEntry([string]$newFieldName, [object]$value) {
         $file = Get-Content -Path $this.LogFilePath
-        $newInitialEntry = $file[0] | ConvertFrom-Json -AsHashtable
+        $newInitialEntry = ($file[0] | ConvertFrom-Json -AsHashtable)
         $newInitialEntry.$newFieldName = $value
         $file[0] = $newInitialEntry | ConvertTo-Json -Compress
         $file | Set-Content -Path $this.LogFilePath
@@ -167,15 +167,6 @@ class JsonLogger {
             $this.CalledFrom = (Get-PSCallStack)[1].ToString()
         }
 
-        if (-not $this.hasWarning -and $level -eq [Levels]::WARNING) {
-            $this.AddToInitialEntry("hasWarning", $true)
-            $this.hasWarning = $true
-        }
-        elseif (-not $this.HasError -and $level -eq [Levels]::ERROR) {
-            $this.AddToInitialEntry("hasError", $true)
-            $this.hasError = $true
-        }
-
         try {
             if ($null -ne $context) {
                 $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $context, $includeCallStack)
@@ -203,7 +194,15 @@ class JsonLogger {
             }
         }
 
-        if ($level -eq [Levels]::FATAL) {
+        if (-not $this.hasWarning -and $level -eq [Levels]::WARNING) {
+            $this.AddToInitialEntry("hasWarning", $true)
+            $this.hasWarning = $true
+        }
+        elseif (-not $this.HasError -and $level -eq [Levels]::ERROR) {
+            $this.AddToInitialEntry("hasError", $true)
+            $this.hasError = $true
+        }
+        elseif ($level -eq [Levels]::FATAL) {
             $this.AddToInitialEntry("hasFatal", $true)
             $this.Close()
             exit 1
