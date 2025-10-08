@@ -1,5 +1,5 @@
 # ps-jsonlogger
-ps-jsonlogger is a small, dependency-free JSON logger designed to be easily embedded in automation scripts. It supports several log levels, context objects, full call stack inclusion, and writes compact, structured JSON entries to disk.
+ps-jsonlogger is a small, dependency-free structured logging module for PowerShell that offers both compact JSON logs on-disk and human-readble console output. It supports log levels, context objects, full call stack inclusion, and more.
 
 ## Usage Instructions
 ### Basic usage
@@ -59,20 +59,28 @@ $logger.Log("ERROR", "Level test - error")
 $logger.Log("DEBUG", "Level test - debug")
 $logger.Log("VERBOSE", "Level test - verbose")
 
-$logger.Close()
+$logger.Close("You can call Close() with an optional message like this")
+$logger.Log("FATAL", "For terminating errors, FATAL logs will exit the script with 'exit 1'.")
+$logger.Log("DEBUG", "This line will never be logged, because the preceeding line exited the program.")
 ```
 
 ##### log_levels.log
 ```JSON
-{"timestamp":"2025-10-06T11:18:40.9320762-05:00","level":"START","programName":"Log Levels","PSVersion":"7.5.3","jsonLoggerVersion":"0.0.2"}
-{"timestamp":"2025-10-06T11:18:40.9328826-05:00","level":"INFO","message":"Hello, World!","calledFrom":"at <ScriptBlock>, C:\\log_levels.ps1: line 4"}
-{"timestamp":"2025-10-06T11:18:40.9446534-05:00","level":"INFO","message":"Info level test","calledFrom":"at <ScriptBlock>, C:\\log_levels.ps1: line 5"}
-{"timestamp":"2025-10-06T11:18:40.9620318-05:00","level":"WARNING","message":"Level test - warning","calledFrom":"at <ScriptBlock>, C:\\log_levels.ps1: line 6"}
-{"timestamp":"2025-10-06T11:18:40.9830093-05:00","level":"ERROR","message":"Level test - error","calledFrom":"at <ScriptBlock>, C:\\log_levels.ps1: line 7"}
-{"timestamp":"2025-10-06T11:18:40.9989381-05:00","level":"DEBUG","message":"Level test - debug","calledFrom":"at <ScriptBlock>, C:\\log_levels.ps1: line 8"}
-{"timestamp":"2025-10-06T11:18:41.0128001-05:00","level":"VERBOSE","message":"Level test - verbose","calledFrom":"at <ScriptBlock>, C:\\log_levels.ps1: line 9","callStack":"at LogEntry, C:\\PowerShell\\Modules\\ps-jsonlogger\\0.0.2\\ps-jsonlogger.psm1: line 57 at Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\0.0.2\\ps-jsonlogger.psm1: line 156 at Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\0.0.2\\ps-jsonlogger.psm1: line 123 at <ScriptBlock>, C:\\log_levels.ps1: line 9 at <ScriptBlock>, <No file>: line 1"}
-{"timestamp":"2025-10-06T11:18:41.0267790-05:00","level":"END"}
+{"timestamp":"2025-10-08T14:28:03.5278616-05:00","level":"START","programName":"Log Levels","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0","hasWarning":true,"hasError":true,"hasFatal":true}
+{"timestamp":"2025-10-08T14:28:03.5400637-05:00","level":"INFO","message":"Hello, World!","calledFrom":"at <ScriptBlock>, C:\\log_levels.ps1: line 5"}
+{"timestamp":"2025-10-08T14:28:03.5618972-05:00","level":"INFO","message":"Info level test","calledFrom":"at <ScriptBlock>, C:\\log_levels.ps1: line 6"}
+{"timestamp":"2025-10-08T14:28:03.6068980-05:00","level":"WARNING","message":"Level test - warning","calledFrom":"at <ScriptBlock>, C:\\log_levels.ps1: line 7"}
+{"timestamp":"2025-10-08T14:28:03.6260778-05:00","level":"ERROR","message":"Level test - error","calledFrom":"at <ScriptBlock>, C:\\log_levels.ps1: line 8"}
+{"timestamp":"2025-10-08T14:28:03.6339598-05:00","level":"DEBUG","message":"Level test - debug","calledFrom":"at <ScriptBlock>, C:\\log_levels.ps1: line 9"}
+{"timestamp":"2025-10-08T14:28:03.6523171-05:00","level":"VERBOSE","message":"Level test - verbose","calledFrom":"at <ScriptBlock>, C:\\log_levels.ps1: line 10","callStack":"at LogEntry, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 67 at Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 185 at Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 143 at <ScriptBlock>, C:\\log_levels.ps1: line 10 at <ScriptBlock>, <No file>: line 1"}
+{"timestamp":"2025-10-08T14:28:03.6715735-05:00","level":"END","message":"You can call Close() with an optional message like this"}
+{"timestamp":"2025-10-08T14:28:03.6860996-05:00","level":"FATAL","message":"For terminating errors, FATAL logs will exit the script with 'exit 1'.","calledFrom":"at <ScriptBlock>, C:\\log_levels.ps1: line 13","callStack":"at LogEntry, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 67 at Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 185 at Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 143 at <ScriptBlock>, C:\\log_levels.ps1: line 13 at <ScriptBlock>, <No file>: line 1"}
+{"timestamp":"2025-10-08T14:28:03.7114409-05:00","level":"END"}
+
 ```
+
+When a log file contains a warning, an error, and/or a fatal entry, the initial entry will include `"hasWarning":true`, `"has:error":true`, and/or `"hasFatal":true` respectively:
+
 
 ### Writing Log Output to the Console
 You can pass the `-WriteToHost` flag to `New-JsonLogger` and write out human-readable versions of the log entries to the console using the `Write-Host` cmdlet (this is in addition to the on-disk log file). Adding that to the above `log_levels.ps1` will look like this:

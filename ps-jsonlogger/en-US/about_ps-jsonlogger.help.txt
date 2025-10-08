@@ -5,24 +5,28 @@ SYNOPSIS
     Lightweight, dependency-free JSON logger for PowerShell scripts.
 
 LONG DESCRIPTION
-    ps-jsonlogger is a small, dependency-free JSON logger designed to be easily
-    embedded in automation scripts. It supports several log levels, context
-    objects, full call stack inclusion, and writes compact, structured JSON
-    entries to disk.
+    ps-jsonlogger is a small, dependency-free structured logging module for
+    PowerShell that offers both compact JSON logs on-disk and human-readble
+    console output. It supports log levels, context objects, full call stack
+    inclusion, and more."
 
 EXAMPLES
     Import-Module ps-jsonlogger
 
-    $logger = New-JsonLogger -LogFilePath "./basic_logging_example.log" -ProgramName "Basic Logging Example"
+    $logger = New-JsonLogger `
+        -LogFilePath "./basic_logging_example.log" `
+        -ProgramName "Basic Logging Example" `
+        -WriteToHost
 
     $logger.Log("Hello, World!")
-    $logger.Log("INFO", "Info level test")
-    $logger.Log("WARNING", "Level test - warning")
-    $logger.Log("ERROR", "Level test - error")
-    $logger.Log("DEBUG", "Level test - debug")
-    $logger.Log("VERBOSE", "Level test - verbose")
+    $logger.Log("INFO", "INFO is the default, but you can also specify it.")
+    $logger.Log("WARNING", "This text will be yellow in the console.")
+    $logger.Log("ERROR", "And this text will be red.")
+    $logger.Log("VERBOSE", "VERBOSE logs always include the full call stack.")
 
-    $logger.Close()
+    $logger.Close("You can write a final log entry to the file like this.")
+    $logger.Log("FATAL", "For terminating errors, use FATAL to call 'exit 1'.")
+    $logger.Log("DEBUG", "This line will never be logged.")
 
 SEE ALSO
     https://github.com/BryanCuneo/ps-jsonlogger/blob/main/README.md
