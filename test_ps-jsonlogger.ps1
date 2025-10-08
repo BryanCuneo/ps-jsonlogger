@@ -84,6 +84,12 @@ function Test-Verbose {
     $global:logger.Log($level, "Verbose test 4 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
 }
 
+function Test-CloseFatal {
+    $global:logger.Close("Testing Close() with a message.")
+    $global:logger.Log("FATAL", "There was a fatal error. Exiting")
+    $global:logger.Log("DEBUG", "This log entry should never be written because the above FATAL entry exits the program.")
+}
+
 function main {
     $global:logger = New-JsonLogger `
         -LogFilePath "./testing.log" `
@@ -96,9 +102,7 @@ function main {
     Test-Error
     Test-Debug
     Test-Verbose
-
-    $global:logger.Close()
-    $global:logger.Close("Testing Close() again with a message.")
+    Test-CloseFatal
 }
 
 main

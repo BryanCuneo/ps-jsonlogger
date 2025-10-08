@@ -44,8 +44,9 @@ You can also call `Close()` with a message string. E.g. `$logger.Close("Done!")`
 _Note: This doesn't actually delete the $logger object or otherwise close your connection to the log file. PowerShell doesn't have any class destructors and there's no filestream object to actually close. Therefore the `Close()` function is just a way to add a final entry to the log file._
 
 ### Log Levels
-The following log levels are available: `INFO`, `WARNING`, `ERROR`, `DEBUG`, `VERBOSE`.
-The only level with special functionality is `VERBOSE`, which always includes the full call stack in the log entry. You can specify which log level you want to use like so:
+The following log levels are available: `INFO`, `WARNING`, `ERROR`, `FATAL`, `DEBUG`, `VERBOSE`. Both `FATAL` and `VERBOSE` always includes the full call stack in the log entry. In addition, `FATAL` will close the log and call `exit 1`, terminating the script.
+
+You can specify which log level you want to use like so:
 ##### log_levels.ps1
 ```PowerShell
 Import-Module ps-jsonlogger

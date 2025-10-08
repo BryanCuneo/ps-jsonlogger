@@ -22,6 +22,7 @@ enum Levels {
     INFO
     WARNING
     ERROR
+    FATAL
     DEBUG
     VERBOSE
 }
@@ -53,7 +54,7 @@ class LogEntry {
 
         $this | Add-Member -MemberType NoteProperty -Name "calledFrom" -Value $calledFrom
 
-        if ($this.level -eq [Levels]::VERBOSE -or $includeCallStack) {
+        if ($this.level -eq [Levels]::VERBOSE -or $this.level -eq [Levels]::FATAL -or $includeCallStack) {
             $this | Add-Member -MemberType NoteProperty -Name "callStack" -Value ([string](Get-PSCallStack))
         }
     }
@@ -188,8 +189,15 @@ class JsonLogger {
             switch ($level) {
                 "WARNING" { Write-Host $logEntry.ToString() -ForegroundColor Yellow }
                 "ERROR" { Write-Host $logEntry.ToString() -ForegroundColor Red }
+                "FATAL" { Write-Host $logEntry.ToString() -ForegroundColor Red }
                 default { Write-Host $logEntry.ToString() }
             }
+        }
+
+        if ($level -eq [Levels]::FATAL) {
+            $this.AddToInitialEntry("hasFatal", $true)
+            $this.Close()
+            exit 1
         }
     }
 
