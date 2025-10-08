@@ -18,15 +18,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-enum Levels {
-    INFO
-    WARNING
-    ERROR
-    FATAL
-    DEBUG
-    VERBOSE
-}
-
 enum Encodings {
     ascii
     bigendianunicode
@@ -37,6 +28,24 @@ enum Encodings {
     utf8BOM
     utf8NoBOM
     utf32
+}
+
+enum Levels {
+    INFO
+    WARNING
+    ERROR
+    FATAL
+    DEBUG
+    VERBOSE
+}
+
+[hashtable]$script:shortLevels = @{
+    "INFO"    = "INF"
+    "WARNING" = "WRN"
+    "ERROR"   = "ERR"
+    "FATAL"   = "FTL"
+    "DEBUG"   = "DBG"
+    "VERBOSE" = "VRB"
 }
 
 class LogEntry {
@@ -60,7 +69,7 @@ class LogEntry {
     }
 
     [string] ToString() {
-        return "[$($this.level)]$($this.message)"
+        return "[$($script:shortLevels[$this.level])] $($this.message)"
     }
 }
 
@@ -108,7 +117,7 @@ class JsonLogger {
             Add-Content -Path $this.LogFilePath -Value $initialEntryJson -Encoding $this.Encoding -ErrorAction Stop
 
             if ($this.WriteToHost) {
-                Write-Host "[$($initialEntry.level)][$(Get-Date $initialEntry.timestamp -f "yyyy-MM-dd HH:mm:ss")]$($this.ProgramName)"
+                Write-Host "[$($initialEntry.level)][$(Get-Date $initialEntry.timestamp -f "yyyy-MM-dd HH:mm:ss")] $($this.ProgramName)"
             }
         }
         catch {
@@ -218,7 +227,7 @@ class JsonLogger {
         if ($this.WriteToHost) {
             $friendlyString = "[$($finalEntry.level)][$(Get-Date $finalEntry.timestamp -f "yyyy-MM-dd HH:mm:ss")]"
             if (-not [string]::IsNullOrEmpty($message)) {
-                $friendlyString += $message
+                $friendlyString += " $message"
             }
             Write-Host $friendlyString
         }
