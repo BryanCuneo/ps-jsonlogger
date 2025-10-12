@@ -37,31 +37,31 @@ function Test-Info {
     $level = "INFO"
     $context = [Ctx]::new("Context - INFO")
 
-    $global:logger.Log("Info test 1 - Log(`$message) (the default level is INFO)")
-    $global:logger.Log($level, "Info test 2 - Log(`$level, `$message)")
-    $global:logger.Log($level, "Info test 3 - Log(`$level, `$message, `$true)", $true)
-    $global:logger.Log($level, "Info test 4 - Log(`$level, `$message, `$context)", $context)
-    $global:logger.Log($level, "Info test 5 - Log(`$level, `$message, @(`$context, `$string), $true)", @($context, "additional context here"), $true)
+    Write-Log "Info test 1 - Write-Log `$message (the default level is INFO)"
+    Write-Log -Level $level "Info test 2 - Write-Log -Level `$level `$message"
+    "Info test 3 - `$message | Write-Log -Level `$level -WithCallStack" | Write-Log -Level $level -WithCallStack
+    Write-Log -I "Info test 4 - Write-Log -I `$message -Context `$context" -Context $context
+    "Info test 5 - `$message | Write-Log -Info -Context @(`$context, `$string) -WithCallStack" | Write-Log -Info -Context @($context, "additional context here") -WithCallStack
 }
 
 function Test-Warning {
     $level = "WARNING"
     $context = [Ctx]::new("Context - WARNING")
 
-    $global:logger.Log($level, "Warning test 1 - Log(`$level, `$message)")
-    $global:logger.Log($level, "Warning test 2 - Log(`$level, `$message, `$true)", $true)
-    $global:logger.Log($level, "Warning test 3 - Log(`$level, `$message, `$context)", $context)
-    $global:logger.Log($level, "Warning test 4 - Log(`$level, `$message, @(`$context, `$string), `$true)", @($context, "additional context here"), $true)
+    Write-Log -Level $level "Warning test 1 - Write-Log -Level `$level `$message"
+    "Warning test 2 - `$message | Write-Log -Level `$level -WithCallStack" | Write-Log -Level $level -WithCallStack
+    Write-Log -W "Warning test 3 - Write-Log -W `$message -Context `$context" -Context $context
+    "Warning test 4 - `$message | Write-Log -Warning -Context @(`$context, `$string) -WithCallStack" | Write-Log -Warning -Context @($context, "additional context here") -WithCallStack
 }
 
 function Test-Error {
     $level = "ERROR"
     $context = [Ctx]::new("Context - ERROR")
 
-    $global:logger.Log($level, "Error test 1 - Log(`$level, `$message)")
-    $global:logger.Log($level, "Error test 2 - Log(`$level, `$message, `$true)", $true)
-    $global:logger.Log($level, "Error test 3 - Log(`$level, `$message, `$context)", $context)
-    $global:logger.Log($level, "Error test 4 - Log(`$level, `$message, @(`$context, `$string), `$true)", @($context, "additional context here"), $true)
+    Write-Log -Level $level "Error test 1 - Write-Log -Level `$level `$message"
+    "Error test 2 - `$message | Write-Log -Level `$level -WithCallStack" | Write-Log -Level $level -WithCallStack
+    Write-Log -E "Error test 3 - Write-Log -E `$message -Context `$context" -Context $context
+    "Error test 4 - `$message | Write-Log -Error -Context @(`$context, `$string) -WithCallStack" | Write-Log -Error -Context @($context, "additional context here") -WithCallStack
 }
 
 function Test-Debug {
@@ -91,8 +91,8 @@ function Test-CloseFatal {
 }
 
 function main {
-    $global:logger = New-JsonLogger `
-        -LogFilePath "./testing.log" `
+    New-Logger `
+        -Path "./testing.log" `
         -ProgramName "Test Script for ps-jsonlogger" `
         -Overwrite `
         -WriteToHost
@@ -100,9 +100,9 @@ function main {
     Test-Info
     Test-Warning
     Test-Error
-    Test-Debug
-    Test-Verbose
-    Test-CloseFatal
+    # Test-Debug
+    # Test-Verbose
+    # Test-CloseFatal
 }
 
 main

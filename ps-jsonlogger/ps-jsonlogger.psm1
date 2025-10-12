@@ -48,61 +48,34 @@ enum Levels {
     "VERBOSE" = "VRB"
 }
 
-class LogEntry {
-    [string]$timestamp = (Get-Date).ToString("o")
-    [string]$level
-    [string]$message
-
-    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [array]$context, [boolean]$includeCallStack) {
-        $this.level = [Levels].GetEnumName($level)
-        $this.message = $message
-
-        if ($null -ne $context) {
-            $this | Add-Member -MemberType NoteProperty -Name "context" -Value $context
-        }
-
-        $this | Add-Member -MemberType NoteProperty -Name "calledFrom" -Value $calledFrom
-
-        if ($this.level -eq [Levels]::VERBOSE -or $this.level -eq [Levels]::FATAL -or $includeCallStack) {
-            $this | Add-Member -MemberType NoteProperty -Name "callStack" -Value ([string](Get-PSCallStack))
-        }
-    }
-
-    [string] ToString() {
-        return "[$($script:shortLevels[$this.level])] $($this.message)"
-    }
-}
+$script:_Loggers = [ordered]@{}
 
 class JsonLogger {
-    [string]$LogFilePath
+    [string]$Path
     [string]$ProgramName
     [string]$Encoding
-    [boolean]$Overwrite
-    [boolean]$WriteToHost
+    [bool]$Overwrite
+    [bool]$WriteToHost
 
     [string]$JsonLoggerVersion = "1.0.0-alpha"
-    [boolean]$hasWarning = $false
-    [boolean]$hasError = $false
+    [bool]$hasWarning = $false
+    [bool]$hasError = $false
 
-    # Because we use "constructor chaining" and chained calls to Log(), we
-    # have to keep track of the function that called Log() in a variable here
-    [string]$CalledFrom
-
-    JsonLogger([string]$logFilePath, [string]$programName, [Encodings]$encoding = [Encodings]::utf8BOM, [boolean]$overwrite = $false, [boolean]$writeToHost) {
-        $this.LogFilePath = $logFilePath
+    JsonLogger([string]$path, [string]$programName, [Encodings]$encoding = [Encodings]::utf8BOM, [bool]$overwrite = $false, [bool]$writeToHost = $false) {
+        $this.Path = $path
         $this.ProgramName = $programName
         $this.Encoding = [Encodings].GetEnumName($encoding)
         $this.Overwrite = $overwrite
         $this.WriteToHost = $writeToHost
 
-        if ($this.Overwrite -or -not (Test-Path -Path $this.LogFilePath)) {
-            New-Item -Path $this.LogFilePath -ItemType File -Force | Out-Null
+        if ($this.Overwrite -or -not (Test-Path -Path $this.Path)) {
+            New-Item -Path $this.Path -ItemType File -Force | Out-Null
         }
-        elseif ((Get-Item -Path $this.LogFilePath).Length -gt 0) {
-            throw "The file '$logFilePath' already exists and is not empty. Use -Overwrite to overwrite it."
+        elseif ((Get-Item -Path $this.Path).Length -gt 0) {
+            throw "The file '$path' already exists and is not empty. Use -Overwrite to overwrite it."
         }
-        elseif (-not (Get-Item -Path $this.LogFilePath).PSIsContainer) {
-            throw "The path '$logFilePath' is not a valid file."
+        elseif (-not (Get-Item -Path $this.Path).PSIsContainer) {
+            throw "The path '$path' is not a valid file."
         }
 
         $initialEntry = [ordered]@{
@@ -114,7 +87,7 @@ class JsonLogger {
         }
         try {
             $initialEntryJson = $initialEntry | ConvertTo-Json -Compress
-            Add-Content -Path $this.LogFilePath -Value $initialEntryJson -Encoding $this.Encoding -ErrorAction Stop
+            Add-Content -Path $this.Path -Value $initialEntryJson -Encoding $this.Encoding -ErrorAction Stop
 
             if ($this.WriteToHost) {
                 Write-Host "[$($initialEntry.level)][$(Get-Date $initialEntry.timestamp -f "yyyy-MM-dd HH:mm:ss")] $($this.ProgramName)"
@@ -126,64 +99,29 @@ class JsonLogger {
     }
 
     hidden [void] AddToInitialEntry([string]$newFieldName, [object]$value) {
-        $file = Get-Content -Path $this.LogFilePath
+        $file = Get-Content -Path $this.Path
         $newInitialEntry = ($file[0] | ConvertFrom-Json -AsHashtable)
         $newInitialEntry.$newFieldName = $value
         $file[0] = $newInitialEntry | ConvertTo-Json -Compress
-        $file | Set-Content -Path $this.LogFilePath
+        $file | Set-Content -Path $this.Path
     }
 
-    [void] Log([string]$message) {
-        $this.CalledFrom = (Get-PSCallStack)[1].ToString()
-        $this.Log([Levels]::INFO, $message, $null, $false)
-    }
-
-    [void] Log([Levels]$level, [string]$message) {
-        $this.CalledFrom = (Get-PSCallStack)[1].ToString()
-        $this.Log($level, $message, $null, $false)
-    }
-
-    [void] Log([Levels]$level, [string]$message, [boolean]$includeCallStack) {
-        $this.CalledFrom = (Get-PSCallStack)[1].ToString()
-        $this.Log($level, $message, $null, $includeCallStack)
-    }
-
-    [void] Log([Levels]$level, [string]$message, [array]$context) {
-        $this.CalledFrom = (Get-PSCallStack)[1].ToString()
-        $this.Log($level, $message, $context, $false)
-    }
-
-    [void] Log([Levels]$level, [string]$message, [array]$context, [boolean]$includeCallStack) {
-        if ($null -eq $level) {
-            $this.CalledFrom = ""
-            throw "Level cannot be null."
-        }
-        if ([string]::IsNullOrEmpty($message)) {
-            $this.CalledFrom = ""
-            throw "Message cannot be null or empty."
-        }
-
-        if ([string]::IsNullOrEmpty($this.CalledFrom)) {
-            $this.CalledFrom = (Get-PSCallStack)[1].ToString()
-        }
-
+    [void] Log([Levels]$level, [string]$message, [string]$calledFrom, [array]$context, [bool]$includeCallStack) {
         try {
             if ($null -ne $context) {
-                $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $context, $includeCallStack)
+                $logEntry = [LogEntry]::new($level, $message, $calledFrom, $context, $includeCallStack)
                 $jsonEntryJson = $logEntry | ConvertTo-Json -Compress -Depth 100
             }
             else {
-                $logEntry = [LogEntry]::new($level, $message, $this.CalledFrom, $null, $includeCallStack)
+                $logEntry = [LogEntry]::new($level, $message, $calledFrom, $null, $includeCallStack)
                 $jsonEntryJson = $logEntry | ConvertTo-Json -Compress
             }
         }
         catch {
-            $this.CalledFrom = ""
             throw $_
         }
 
-        $this.CalledFrom = ""
-        Add-Content -Path $this.LogFilePath -Value $jsonEntryJson -Encoding $this.Encoding -ErrorAction Stop
+        Add-Content -Path $this.Path -Value $jsonEntryJson -Encoding $this.Encoding -ErrorAction Stop
 
         if ($this.WriteToHost) {
             switch ($level) {
@@ -232,63 +170,176 @@ class JsonLogger {
         }
 
         $finalEntryJson = $finalEntry | ConvertTo-Json -Compress
-        Add-Content -Path $this.LogFilePath -Value $finalEntryJson -Encoding $this.Encoding -ErrorAction Stop
+        Add-Content -Path $this.Path -Value $finalEntryJson -Encoding $this.Encoding -ErrorAction Stop
     }
 }
 
-function New-JsonLogger {
+class LogEntry {
+    [string]$timestamp = (Get-Date).ToString("o")
+    [string]$level
+    [string]$message
 
-    param (
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$LogFilePath,
+    LogEntry([Levels]$level, [string]$message, [string]$calledFrom, [array]$context, [bool]$includeCallStack) {
+        $this.level = [Levels].GetEnumName($level)
+        $this.message = $message
 
-        [ValidateNotNullOrEmpty()]
-        [Parameter(Mandatory = $true)]
-        [string]$ProgramName,
+        if ($null -ne $context) {
+            $this | Add-Member -MemberType NoteProperty -Name "context" -Value $context
+        }
 
-        [Encodings]$Encoding = [Encodings]::utf8BOM,
-        [switch]$Overwrite,
-        [switch]$WriteToHost
-    )
+        $this | Add-Member -MemberType NoteProperty -Name "calledFrom" -Value $calledFrom
 
-    <#
-    .SYNOPSIS
-        Create a new JsonLogger instance and initialize the log file.
+        if ($this.level -eq [Levels]::VERBOSE -or $this.level -eq [Levels]::FATAL -or $includeCallStack) {
+            $this | Add-Member -MemberType NoteProperty -Name "callStack" -Value ([string](Get-PSCallStack))
+        }
+    }
 
-    .DESCRIPTION
-        Creates and returns an instance of the `JsonLogger` class. If the
-        target log file does not exist it will be created. If the file exists
-        and is non-empty, you can use `-Overwrite` to force initialization.
-
-    .PARAMETER LogFilePath
-        Path to the file to write log entries to.
-
-    .PARAMETER ProgramName
-        Friendly program name included in the initial log entry written to
-        the first entry of the log.
-
-    .PARAMETER Encoding
-        File encoding to use when writing log entries.
-        Available:
-            ascii, bigendianunicode, oem, unicode, utf7, utf8, utf8BOM, utf8NoBOM, utf32
-        Default:
-            utf8BOM
-
-    .PARAMETER Overwrite
-        If specified, existing log files will be truncated/overwritten.
-
-    .PARAMETER WriteToHost
-        If specified, write a human-readable log line to the console using Write-Host.
-
-    .EXAMPLE
-        $logger = New-JsonLogger -LogFilePath './testing.log' -ProgramName 'ps-jsonlogger testing'
-
-    .NOTES
-        This function is exported by the module.
-    #>
-
-    return [JsonLogger]::new($LogFilePath, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
+    [string] ToString() {
+        return "[$($script:shortLevels[$this.level])] $($this.message)"
+    }
 }
 
-Export-ModuleMember -Function New-JsonLogger
+function New-Logger {
+    param(
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ProgramName,
+
+        [ValidateNotNullOrEmpty()]
+        [Encodings]$Encoding = "utf8BOM",
+
+        [ValidateNotNullOrEmpty()]
+        [string]$LoggerName = "default",
+
+        [switch]$Overwrite,
+        [switch]$WriteToHost,
+        [switch]$Force
+    )
+
+    if ($script:_Loggers.Contains($LoggerName) -and -not $Force) {
+        throw "Unable to create logger '$LoggerName'. Use -LoggerName <name> to create a new logger with a different name or -Force to override this."
+    }
+
+    $script:_Loggers[$LoggerName] = [JsonLogger]::new($Path, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
+}
+
+function Write-Log {
+    [CmdletBinding(DefaultParameterSetName = "LevelParam")]
+    param(
+        [Parameter(ParameterSetName = "LevelParam")]
+        [Parameter(ParameterSetName = "Info")]
+        [Parameter(ParameterSetName = "Warning")]
+        [Parameter(ParameterSetName = "Error")]
+        [Parameter(ParameterSetName = "Debug")]
+        [Parameter(ParameterSetName = "Verbose")]
+        [Parameter(ParameterSetName = "Fatal")]
+        [Parameter(Mandatory, ValueFromPipeline = $true, Position = 0)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Message,
+
+        [Parameter(ParameterSetName = "LevelParam")]
+        [Parameter(ParameterSetName = "Info")]
+        [Parameter(ParameterSetName = "Warning")]
+        [Parameter(ParameterSetName = "Error")]
+        [Parameter(ParameterSetName = "Debug")]
+        [Parameter(ParameterSetName = "Verbose")]
+        [Parameter(ParameterSetName = "Fatal")]
+        [array]$Context = $null,
+
+        [Parameter(ParameterSetName = "LevelParam")]
+        [Parameter(ParameterSetName = "Info")]
+        [Parameter(ParameterSetName = "Warning")]
+        [Parameter(ParameterSetName = "Error")]
+        [Parameter(ParameterSetName = "Debug")]
+        [Parameter(ParameterSetName = "Verbose")]
+        [Parameter(ParameterSetName = "Fatal")]
+        [switch]$WithCallStack,
+
+        [Parameter(ParameterSetName = "LevelParam")]
+        [Parameter(ParameterSetName = "Info")]
+        [Parameter(ParameterSetName = "Warning")]
+        [Parameter(ParameterSetName = "Error")]
+        [Parameter(ParameterSetName = "Debug")]
+        [Parameter(ParameterSetName = "Verbose")]
+        [Parameter(ParameterSetName = "Fatal")]
+        [ValidateNotNullOrEmpty()]
+        [string]$Logger = "default",
+
+        [Parameter(ParameterSetName = "LevelParam")]
+        [ValidateSet("INFO", "I", "WARNING", "W", "ERROR", "E", "DEBUG", "D", "VERBOSE", "V", "FATAL", "F")]
+        [string]$Level = "INFO",
+
+        [Parameter(Mandatory, ParameterSetName = "Info")]
+        [Alias("I")]
+        [switch]$Info,
+
+        [Parameter(Mandatory, ParameterSetName = "Warning")]
+        [Alias("W")]
+        [switch]$Warning,
+
+        [Parameter(Mandatory, ParameterSetName = "Error")]
+        [Alias("E")]
+        [switch]$Error,
+
+        [Parameter(Mandatory, ParameterSetName = "Debug")]
+        [Alias("D")]
+        [switch]$Dbg,
+
+        [Parameter(Mandatory, ParameterSetName = "Verbose")]
+        [Alias("V")]
+        [switch]$Vrb,
+
+        [Parameter(Mandatory, ParameterSetName = "Fatal")]
+        [Alias("F")]
+        [switch]$Fatal
+    )
+
+    if ($($PSCmdlet.ParameterSetName) -ne "LevelParam") {
+        if ($Info)        { $Level = "INFO" }
+        elseif ($Warning) { $Level = "WARNING"}
+        elseif ($Error)   { $Level = "ERROR" }
+        elseif ($Dbg)     { $Level = "DEBUG" }
+        elseif ($Vrb)     { $Level = "VERBOSE" }
+        else              { $Level = "FATAL" }
+    }
+
+    if ($script:_Loggers.Count -eq 0) {
+        throw "No existing loggers. Use 'New-Logger' to create one."
+    }
+
+    if (-not $script:_Loggers.Contains($Logger)) {
+        Write-Warning "'$Logger' does not match any existing loggers ('$($script:_Loggers.Keys -join ", '")'). Falling back to '$($script:_Loggers.Keys[0])'."
+        $Logger = $script:_Loggers.Keys[0]
+    }
+
+    $script:_Loggers[$Logger].Log($Level, $Message, (Get-PSCallStack)[1].ToString(), $Context, $WithCallStack)
+}
+
+function Close-Log {
+    param(
+        [Parameter(Mandatory, ParameterSetName = "WithMessage", Position = 0, ValueFromPipeline = $true)]
+        [string]$Message = "",
+
+        [Parameter(ParameterSetName = "WithMessage")]
+        [Parameter(ParameterSetName = "WithoutMessage")]
+        [ValidateNotNullOrEmpty()]
+        [string]$Logger = "default"
+    )
+
+    if ($script:_Loggers.Count -eq 0) {
+        throw "There are no loggers to close."
+    }
+
+    if (-not $script:_Loggers.Contains($Logger)) {
+        throw "'$Logger' does not match any existing loggers ('$($script:_Loggers.Keys -join ", '")')."
+    }
+
+    $script:_Loggers[$Logger].Close($Message)
+    $script:_Loggers.Remove($Logger)
+}
+
+Export-ModuleMember -Function New-Logger, Write-Log, Close-Log
