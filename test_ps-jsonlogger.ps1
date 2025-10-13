@@ -18,7 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-Import-Module "./ps-jsonlogger/" -Force
+Import-Module "./ps-jsonlogger/ps-jsonlogger.psm1" -Force
 
 class Ctx {
     [string]$Name
@@ -39,9 +39,9 @@ function Test-Info {
     $context = [Ctx]::new("Context - INFO")
 
     Write-Log "Info test 1 - Write-Log `$message (the default level is INFO)"
-    Write-Log -Level $level "Info test 2 - Write-Log -Level '$level' `$message"
+    Write-Log -Level $level "Info test 2 - Write-Log -Level `"$level`" `$message"
     Write-Log -Inf "Info test 3 - Write-Log -Inf `$message -Context `$context" -Context $context
-    "Info test 4 - `$message | Write-Log -Level '$level_short' -WithCallStack" | Write-Log -Level $level_short -WithCallStack
+    "Info test 4 - `$message | Write-Log -Level `"$level_short`" -WithCallStack" | Write-Log -Level $level_short -WithCallStack
     "Info test 5 - `$message | Write-Log -I -Context @(`$context, `$string) -WithCallStack" | Write-Log -I -Context @($context, "additional context here") -WithCallStack
 }
 
@@ -50,9 +50,9 @@ function Test-Warning {
     $level_short = "W"
     $context = [Ctx]::new("Context - WARNING")
 
-    Write-Log -Level $level "Warning test 1 - Write-Log -Level '$level' `$message"
+    Write-Log -Level $level "Warning test 1 - Write-Log -Level `"$level`" `$message"
     Write-Log -Wrn "Warning test 2 - Write-Log -Wrn `$message -Context `$context" -Context $context
-    "Warning test 3 - `$message | Write-Log -Level '$level_short' -WithCallStack" | Write-Log -Level $level_short -WithCallStack
+    "Warning test 3 - `$message | Write-Log -Level `"$level_short`" -WithCallStack" | Write-Log -Level $level_short -WithCallStack
     "Warning test 4 - `$message | Write-Log -W -Context @(`$context, `$string) -WithCallStack" | Write-Log -W -Context @($context, "additional context here") -WithCallStack
 
     $log = @{
@@ -67,9 +67,9 @@ function Test-Error {
     $level_short = "E"
     $context = [Ctx]::new("Context - ERROR")
 
-    Write-Log -Level $level "Error test 1 - Write-Log -Level '$level' `$message"
+    Write-Log -Level $level "Error test 1 - Write-Log -Level `"$level`" `$message"
     Write-Log -Err "Error test 2 - Write-Log -Err `$message -Context `$context" -Context $context
-    "Error test 3 - `$message | Write-Log -Level '$level_short' -WithCallStack" | Write-Log -Level $level_short -WithCallStack
+    "Error test 3 - `$message | Write-Log -Level `"$level_short`" -WithCallStack" | Write-Log -Level $level_short -WithCallStack
     "Error test 4 - `$message | Write-Log -E -Context @(`$context, `$string) -WithCallStack" | Write-Log -E -Context @($context, "additional context here") -WithCallStack
 }
 
@@ -78,9 +78,9 @@ function Test-Debug {
     $level_short = "D"
     $context = [Ctx]::new("Context - DEBUG")
 
-    Write-Log -Level $level "Debug test 1 - Write-Log -Level '$level' `$message"
+    Write-Log -Level $level "Debug test 1 - Write-Log -Level `"$level`" `$message"
     Write-Log -Dbg "Debug test 2 - Write-Log -Dbg `$message -Context `$context" -Context $context
-    "Debug test 3 - `$message | Write-Log -Level '$level_short' -WithCallStack" | Write-Log -Level $level_short -WithCallStack
+    "Debug test 3 - `$message | Write-Log -Level `"$level_short`" -WithCallStack" | Write-Log -Level $level_short -WithCallStack
     "Debug test 4 - `$message | Write-Log -D -Context @(`$context, `$string) -WithCallStack" | Write-Log -D -Context @($context, "additional context here") -WithCallStack
 }
 
@@ -89,20 +89,19 @@ function Test-Verbose {
     $level_short = "V"
     $context = [Ctx]::new("Context - VERBOSE")
 
-    Write-Log -Level $level "Verbose test 1 - Write-Log -Level '$level' `$message"
+    Write-Log -Level $level "Verbose test 1 - Write-Log -Level `"$level`" `$message"
     Write-Log -Vrb "Verbose test 2 - Write-Log -Vrb `$message -Context `$context" -Context $context
-    "Verbose test 3 - `$message | Write-Log -Level '$level_short' -WithCallStack" | Write-Log -Level $level_short -WithCallStack
+    "Verbose test 3 - `$message | Write-Log -Level `"$level_short`" -WithCallStack" | Write-Log -Level $level_short -WithCallStack
     "Verbose test 4 - `$message | Write-Log -V -Context @(`$context, `$string) -WithCallStack" | Write-Log -V -Context @($context, "additional context here") -WithCallStack
 }
 
 function Test-Fatal {
-    Write-Log -Level "FATAL" "Fatal test 1 - Write-Log -Level 'FATAL' `$message"
+    Write-Log -Level "FATAL" "Fatal test 1 - Write-Log -Level `"FATAL`" `$message"
     Write-Log -Dbg "This log entry should never be written because the above FATAL entry exits the program."
 }
 
 function main {
     New-Logger -Path "./testing.log" -ProgramName "Test Script for ps-jsonlogger" -Overwrite -WriteToHost
-
     Test-Info
     Test-Warning
     Test-Error

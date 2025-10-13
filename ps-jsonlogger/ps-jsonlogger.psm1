@@ -30,6 +30,16 @@ enum Encodings {
     utf32
 }
 
+$Ps5Encodings = @(
+    "ascii",
+    "bigendianunicode",
+    "oem",
+    "unicode",
+    "utf7",
+    "utf8",
+    "utf32"
+)
+
 enum Levels {
     INFO
     WARNING
@@ -99,11 +109,23 @@ class Logger {
     }
 
     hidden [void] AddToInitialEntry([string]$newFieldName, [object]$value) {
-        $file = Get-Content -Path $this.Path
-        $newInitialEntry = ($file[0] | ConvertFrom-Json -AsHashtable)
+        $file = Get-Content -Path $this.Path -Encoding $this.Encoding
+
+        if ($global:PSVersionTable.PSVersion.Major -ge 6) {
+            $newInitialEntry = ($file[0] | ConvertFrom-Json -AsHashtable)
+        }
+        else {
+            # PowerShell v5 doesn't support -AsHashtable, so we have to do it manually
+            $json = ($file[0] | ConvertFrom-Json)
+            $newInitialEntry = [ordered]@{}
+            $json.PSObject.Properties | ForEach-Object {
+                $newInitialEntry[$_.Name] = $_.Value
+            }
+        }
+
         $newInitialEntry.$newFieldName = $value
         $file[0] = $newInitialEntry | ConvertTo-Json -Compress
-        $file | Set-Content -Path $this.Path
+        $file | Set-Content -Path $this.Path -Encoding $this.Encoding
     }
 
     [void] Log([Levels]$level, [string]$message, [string]$calledFrom, [array]$context, [bool]$includeCallStack) {
@@ -218,8 +240,14 @@ Friendly name for the program that is logging. It is mandatory and cannot be
 null or empty.
 
 .PARAMETER Encoding
-Text encoding used for the log file. Available options:
+Text encoding used for the log file.
+
+PowerShell v7 suppors the following:
 ascii, bigendianunicode, oem, unicode, utf7, utf8, utf8BOM, utf8NoBOM, utf32
+Default: utf8BOM
+
+PowerShell v5 supports this subset:
+ascii, bigendianunicode, oem, unicode, utf7, utf8, utf32
 Default: utf8
 
 .PARAMETER LoggerName
@@ -280,8 +308,7 @@ function New-Logger {
         [ValidateNotNullOrEmpty()]
         [string]$ProgramName,
 
-        [ValidateNotNullOrEmpty()]
-        [Encodings]$Encoding = [Encodings]::utf8,
+        [Encodings]$Encoding,
 
         [ValidateNotNullOrEmpty()]
         [string]$LoggerName = "default",
@@ -290,6 +317,19 @@ function New-Logger {
         [switch]$WriteToHost,
         [switch]$Force
     )
+
+    if ([string]::IsNullOrEmpty($Encoding)) {
+        if ($PSVersionTable.PSVersion.Major -ge 6) {
+            $Encoding = [Encodings]::utf8BOM
+        }
+        else {
+            $Encoding = [Encodings]::utf8
+        }
+    }
+
+    if ($PSVersionTable.PSVersion.Major -le 5 -and $Encoding -notin $Ps5Encodings) {
+        throw "Encoding '$Encoding' is not supported on PowerShell v$($PSVersionTable.PSVersion.Major). Please try again with a supported encoding:`n`t$($Ps5Encodings -join ", ")"
+    }
 
     if ($script:_Loggers.Contains($LoggerName) -and -not $Force) {
         throw "Unable to create logger '$LoggerName'. Use -LoggerName <name> to create a new logger with a different name or -Force to override this."
