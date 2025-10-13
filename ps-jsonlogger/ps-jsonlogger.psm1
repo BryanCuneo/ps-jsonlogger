@@ -341,7 +341,8 @@ function Close-Log {
     )
 
     if ($script:_Loggers.Count -eq 0) {
-        throw "There are no loggers to close."
+        Write-Warning "There are no loggers to close."
+        return
     }
 
     if (-not $script:_Loggers.Contains($Logger)) {
