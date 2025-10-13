@@ -414,8 +414,13 @@ Default: `utf8`
 
 If you're using v5, you can still use the `Encoding` parameter to specify the encoding you want to use but you will get an error if you try to use an unsupported encoding.
 
+```
+PSv5 > New-Logger -Path "./encoding.log" -ProgramName "Encoding Test" -Encoding utf8BOM
+Encoding 'utf8BOM' is not supported on PowerShell v5. Please try again with a supported encoding:
+        ascii, bigendianunicode, oem, unicode, utf7, utf8, utf32
+```
 
 ### Spercial Characters in JSON
-Powershell v5 does not convert all special characters in JSON strings the same way as PowerShell v7. This means that you may see some characters like `\u003c` in your log files in v5 instead of `<` in v7 or `\u0027` instead of `'`. PowerShell v5 will still import these files just fine and the initial log entry include the `powerShellVersion` property that can be utilized in any parsers to ensure proper JSON deserialization.
+Powershell v5 does not convert all special characters in JSON strings the same way as PowerShell v7. This means that you may see some characters like `\u003c` in your log files in v5 instead of `<` in v7 or `\u0027` instead of `'`. PowerShell v5 will still import these files just fine and the initial log entry includes the `powerShellVersion` property that can be utilized in any parsers to ensure proper JSON deserialization.
 
 [Back to the table of contents](#usage-instructions---table-of-contents)

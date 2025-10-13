@@ -164,6 +164,7 @@ class Logger {
         }
         elseif ($level -eq [Levels]::FATAL) {
             $this.AddToInitialEntry("hasFatal", $true)
+            $this.Close()
             Cleanup
             exit 1
         }
@@ -336,11 +337,9 @@ function New-Logger {
         throw "Unable to create logger '$LoggerName'. Use -LoggerName <name> to create a new logger with a different name or -Force to override this."
     }
 
-    $file = Get-ChildItem './myfile1.txt'
-    if ($PSCmdlet.ShouldProcess($file.Name)) {
+    if ($PSCmdlet.ShouldProcess($Path, "Create logger '$LoggerName'")) {
         $script:_Loggers[$LoggerName] = [Logger]::new($Path, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
     }
-
 }
 
 <#
@@ -605,9 +604,7 @@ function Close-Log {
 }
 
 function Cleanup {
-    $script:_Loggers.Values | ForEach-Object {
-        $_.Close()
-    }
+    $script:_Loggers.Clear()
 }
 
 # PS module lifecycle management kind of sucks. The PowerShell.Exiting and
