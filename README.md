@@ -37,11 +37,7 @@ If these features match your needs, ps-jsonlogger is for you! You can get starte
 - [Notes on PowerShell Core 7 vs Windows PowerShell 5.1](#notes-on-powershell-core-7-vs-windows-powershell-51)
 
 ## Installation
-ps-jsonlogger is available on PowerShell Gallery.
-
-```
-PS > Install-Module ps-jsonlogger
-```
+ps-jsonlogger will be avialable from the PowerShell Gallery as soon as the [PSGallery login issues](https://github.com/PowerShell/PowerShellGallery/issues/1771) are resolved. In the meantime, you can download it directly from the [releases page](https://github.com/BryanCuneo/ps-jsonlogger/releases).
 
 [Back to the table of contents](#usage-instructions---table-of-contents)
 ## Basic Usage
