@@ -1,9 +1,26 @@
 # ps-jsonlogger
 ps-jsonlogger is a small, dependency-free structured logging module for PowerShell that offers both compact JSON logs on-disk and human-readble console output. It supports log levels, context objects, full call stack inclusion, and more.
 
-## Usage Instructions
-### Basic usage
-##### basic_logging.ps1
+## Usage Instructions - Table of Contents
+
+- [Basic Usage](#basic-usage)
+  
+- [Closing Logs](#closing-logs)
+  
+- [Log Levels](#log-levels)
+  
+- [Writing Log Output to the Console](#writing-log-output-to-the-console)
+  
+- [Overwriting Existing Log Files](#overwriting-existing-log-files)
+  
+- [The `calledFrom` Field](#the-calledfrom-field)
+  
+- [Additional Log Entry Options](#additional-log-entry-options)
+  
+- [Creating Multiple Loggers](#creating-multiple-loggers)
+
+## Basic Usage
+#### basic_logging.ps1
 ```PowerShell
 Import-Module ps-jsonlogger
 
@@ -11,7 +28,7 @@ New-Logger -Path "./basic_logging.log" -ProgramName "Basic Logging Example"
 Write-Log "Hello, World!"
 ```
 
-##### basic_logging.log
+#### basic_logging.log
 ```json
 {"timestamp":"2025-10-12T21:10:25.6091212-05:00","level":"START","programName":"Basic Logging Example","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0"}
 {"timestamp":"2025-10-12T21:10:25.6163049-05:00","level":"INFO","message":"Hello, World!","calledFrom":"at <ScriptBlock>, C:\\basic_logging.ps1: line 4"}
@@ -19,9 +36,10 @@ Write-Log "Hello, World!"
 
 The first entry in a log file, which is created when you run `New-Logger`, always contains the program name, the timestmap of when the log was initialized, your PowerShell version and your ps-jsonlogger version.
 
-### Closing the Log
+[Back to the table of contents](#usage-instructions---table-of-contents)
+## Closing Logs
 It is recommended that you call `Close-Log` at the end of your script so that a final entry is written to the log file. This will also remove it from the pool of loggers and it can no longer be written to.
-##### close.ps1
+#### close.ps1
 ```PowerShell
 Import-Module ps-jsonlogger
 
@@ -30,7 +48,7 @@ Write-Log "Hello, World!"
 Close-Log
 ```
 
-##### close.log
+#### close.log
 ```JSON
 {"timestamp":"2025-10-12T21:14:02.3854661-05:00","level":"START","programName":"Close-Log Example","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0"}
 {"timestamp":"2025-10-12T21:14:02.3860781-05:00","level":"INFO","message":"Hello, World!","calledFrom":"at <ScriptBlock>, C:\\close.ps1: line 4"}
@@ -44,9 +62,10 @@ You can also call `Close-Log` with a message string. E.g. `Close-Log "Done!"` wi
 
 If you have multiple loggers open, you can close all of them at once by calling `Close-Log -All`.
 
-### Log Levels
+[Back to the table of contents](#usage-instructions---table-of-contents)
+## Log Levels
 The following log levels are available: `INFO`, `WARNING`, `ERROR`, `FATAL`, `DEBUG`, `VERBOSE`. Both `FATAL` and `VERBOSE` always includes the full call stack in the log entry. Additionally, `FATAL` will close the log and call `exit 1`, terminating the script. You can specify which log level you want to use like so:
-##### log_levels_part_1.ps1
+#### log_levels_part_1.ps1
 ```PowerShell
 Import-Module ps-jsonlogger
 
@@ -62,7 +81,7 @@ Write-Log -Level "FATAL" "For terminating errors, FATAL-level logs will exit the
 Write-Log -Level "DEBUG" "This line will never be logged because the preceeding line exited the program."
 ```
 
-##### log_levels_part_1.log
+#### log_levels_part_1.log
 ```JSON
 {"timestamp":"2025-10-12T21:35:29.4843863-05:00","level":"START","programName":"Log Levels Example 1","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0","hasWarning":true,"hasError":true,"hasFatal":true}
 {"timestamp":"2025-10-12T21:35:29.4856272-05:00","level":"INFO","message":"Info level test","calledFrom":"at <ScriptBlock>, C:\\log_levels_part_1.ps1: line 5"}
@@ -81,7 +100,7 @@ There are a couple ways to specify the log level, all are case-insensitive, and 
 
 _Note: All per-level parameters are shortened versions of the full level names. This is because Error, Verbose, and Debug are all reserved words of one kind or another in PowerShell. The full list is `-Inf`, `-Wrn`, `-Err`, `-Dbg`, `-Vrb`, and `-Ftl`._
 
-##### log_levels_part_2.ps1
+#### log_levels_part_2.ps1
 ```PowerShell
 Import-Module ps-jsonlogger
 
@@ -96,7 +115,7 @@ Write-Log -V "If you want to be REALLY consice, you can also shorten the per-lev
 Close-Log
 ```
 
-##### log_levels_part_2.log
+#### log_levels_part_2.log
 ```JSON
 {"timestamp":"2025-10-12T21:51:34.9483648-05:00","level":"START","programName":"Log Levels Example 2","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0","hasWarning":true,"hasError":true}
 {"timestamp":"2025-10-12T21:51:34.9493238-05:00","level":"INFO","message":"If you don't specify a level, INFO is the default","calledFrom":"at <ScriptBlock>, C:\\log_levels_part_2.ps1: line 5"}
@@ -109,15 +128,16 @@ Close-Log
 
 When a log file contains a warning, an error, and/or a fatal entry, the initial entry will be updated to include `"hasWarning":true`, `"has:error":true`, and/or `"hasFatal":true` respectively:
 
-##### Initial entry of log_levels_part_1.log
+#### Initial entry of log_levels_part_1.log
 ```JSON
 {"timestamp":"2025-10-12T21:35:29.4843863-05:00","level":"START","programName":"Log Levels Example 1","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0","hasWarning":true,"hasError":true,"hasFatal":true}
 ```
 
-### Writing Log Output to the Console
+[Back to the table of contents](#usage-instructions---table-of-contents)
+## Writing Log Output to the Console
 You can pass the `-WriteToHost` flag to `New-Logger` and write out human-readable versions of the log entries to the console using the `Write-Host` cmdlet (this is in addition to the on-disk log file):
 
-##### write_to_host.ps1
+#### write_to_host.ps1
 ```PowerShell
 Import-Module ps-jsonlogger
 
@@ -133,7 +153,7 @@ Write-Log -Level "FATAL" "For terminating errors, FATAL-level logs will exit the
 Write-Log -Level "DEBUG" "This line will never be logged because the preceeding line exited the program."
 ```
 
-##### Console Output
+#### Console Output
 ```
 PS > ./write_to_host.ps1
 [START][2025-10-12 21:57:46] Write to Host Example
@@ -149,7 +169,8 @@ PS >
 
 _Note: In an actual PowerShell console, warnings will have yellow text and errors and fatal errors will have red text. Due to a limitation of GitHub`s markdown, those colors are not displayed above._
 
-### Overwriting Existing Log Files
+[Back to the table of contents](#usage-instructions---table-of-contents)
+## Overwriting Existing Log Files
 Normally when you try to write to an existing file, you'll receive an error:
 
 ```PowerShell
@@ -164,10 +185,11 @@ You can pass the `-Overwrite` flag to `New-Logger` to overwrite the existing fil
 PS > New-Logger -Path "./overwrite_test.log" -ProgramName "Overwrite Example" -Overwrite
 ```
 
-### The `calledFrom` Field
+[Back to the table of contents](#usage-instructions---table-of-contents)
+## The `calledFrom` Field
 The `calledFrom` field in each log entries tells you from where the `Write-Log` function was called. If it was called from a function, you'll see the function name, script source, and what line in that script source the call to `Write-Log` happened:
 
-##### called_within_function.ps1
+#### called_within_function.ps1
 ```PowerShell
 Import-Module ps-jsonlogger
 
@@ -179,13 +201,13 @@ function main {
 
 main
 ```
-##### Relevant line from called_within_function.log
+#### Relevant line from called_within_function.log
 ```JSON
 {"timestamp":"2025-10-12T22:08:53.1801031-05:00","level":"INFO","message":"Check out the 'calledFrom' attribute of this log entry!","calledFrom":"at main, C:\\called_within_function.ps1: line 5"}
 ```
 
 If instead you call `Write-Log` outside a function, you will see the text `at <ScriptBlock>` instead of `at FunctionName`:
-##### called_outside_function.ps1
+#### called_outside_function.ps1
 ```PowerShell
 Import-Module ps-jsonlogger
 
@@ -193,12 +215,13 @@ New-Logger -Path "./called_outside_function.log" -ProgramName "Called Outside Fu
 Write-Log "Check out the 'calledFrom' attribute of this log entry!"
 Close-Log
 ```
-##### Relevant line from called_outside_function.log
+#### Relevant line from called_outside_function.log
 ```JSON
 {"timestamp":"2025-10-12T22:06:06.4923488-05:00","level":"INFO","message":"Check out the 'calledFrom' attribute of this log entry!","calledFrom":"at <ScriptBlock>, C:\\called_outside_function.ps1: line 4"}
 ```
 
-### Additional Log Entry Options
+[Back to the table of contents](#usage-instructions---table-of-contents)
+## Additional Log Entry Options
 `Write-Log` provides two additional options:
  * Include one or more additional objects for context
  * Include the full call stack
@@ -221,7 +244,7 @@ Write-Log -Level $level -Message $message -Context $obj -WithCallStack
 #### Context Object(s)
 You can pass any PowerShell object, or an array of multiple objects, to `New-Logger -Context` to have them appear in the log entry. Here's an example:
 
-##### context_object.ps1
+#### context_object.ps1
 ```PowerShell
 Import-Module ps-jsonlogger
 
@@ -255,7 +278,7 @@ function main {
 main
 ```
 
-##### Relevant line from context_object.log
+#### Relevant line from context_object.log
 ```JSON
 {"timestamp":"2025-10-12T22:15:32.1680644-05:00","level":"DEBUG","message":"Current object state","context":[{"Name":"Sample Context Object","NestedObj1":{"Id":1,"Value":"Nested object 1"},"NestedObj2":{"Id":2,"Value":"Nested object 2"}}],"calledFrom":"at main, C:\\context_object.ps1: line 26"}
 ```
@@ -263,7 +286,7 @@ main
 #### Include the full call stack
 If you wish to include the full call stack (taken from PowerShell's `Get-PSCallStack`), you can do that like this:
 
-##### call_stack.ps1
+#### call_stack.ps1
 ```PowerShell
 Import-Module ps-jsonlogger
 
@@ -283,7 +306,7 @@ function main {
 main
 ```
 
-##### call_stack.log
+#### call_stack.log
 ```JSON
 {"timestamp":"2025-10-12T22:17:44.2150565-05:00","level":"START","programName":"Including the full call stack.","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0"}
 {"timestamp":"2025-10-12T22:17:44.2157187-05:00","level":"DEBUG","message":"Full call stack, first function","calledFrom":"at main, C:\\call_stack.ps1: line 9","callStack":"at LogEntry, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 193 at Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 116 at Write-Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 329 at main, C:\\call_stack.ps1: line 9 at <ScriptBlock>, C:\\call_stack.ps1: line 16 at <ScriptBlock>, <No file>: line 1"}
@@ -291,10 +314,11 @@ main
 {"timestamp":"2025-10-12T22:17:44.2421852-05:00","level":"END"}
 ```
 
-### Creating Multiple Loggers
+[Back to the table of contents](#usage-instructions---table-of-contents)
+## Creating Multiple Loggers
 You can create multiple loggers in the same script by calling `New-Logger`  with the `-LoggerName` parameter. This will create a new logger with a different name, and you can use it in `Write-Log` and `Close-Log` by specifying the logger name as the `-Logger` parameter. Under the hood, the default logger is always named "default" and you can safely omit the -LoggerName parameter if you don't need multiple loggers.
 
-##### multiple_loggers.ps1
+#### multiple_loggers.ps1
 ```PowerShell
 Import-Module ps-jsonlogger
 
@@ -338,17 +362,19 @@ function main {
 main
 ```
 
-##### multiple_loggers_default.log
+#### multiple_loggers_default.log
 ```JSON
 {"timestamp":"2025-10-13T11:03:34.6137242-05:00","level":"START","programName":"Multiple Loggers Example","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0"}
 {"timestamp":"2025-10-13T11:03:34.6219973-05:00","level":"INFO","message":"This will go to the default logger.","calledFrom":"at DoSomething, C:\\multiple_loggers.ps1: line 4"}
 {"timestamp":"2025-10-13T11:03:34.6571757-05:00","level":"END","message":"Error encountered. Closing."}
 ```
 
-##### multiple_loggers_errors.log
+#### multiple_loggers_errors.log
 ```JSON
 {"timestamp":"2025-10-13T11:03:34.6179096-05:00","level":"START","programName":"Multiple Loggers Example","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0","hasError":true,"hasFatal":true}
 {"timestamp":"2025-10-13T11:03:34.6391387-05:00","level":"ERROR","message":"This will go to the errors logger.","calledFrom":"at main, C:\\multiple_loggers.ps1: line 25"}
 {"timestamp":"2025-10-13T11:03:34.6646649-05:00","level":"FATAL","message":"Whoops...","calledFrom":"at main, C:\\multiple_loggers.ps1: line 36","callStack":"at LogEntry, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 193 at Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 116 at Write-Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 487 at main, C:\\multiple_loggers.ps1: line 36 at <ScriptBlock>, C:\\multiple_loggers.ps1: line 40 at <ScriptBlock>, <No file>: line 1"}
 {"timestamp":"2025-10-13T11:03:34.6908570-05:00","level":"END"}
 ```
+
+[Back to the table of contents](#usage-instructions---table-of-contents)
