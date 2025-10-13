@@ -1,13 +1,16 @@
 Import-Module ps-jsonlogger
 
-function Second-Function {
-    $script:logger.Log("DEBUG", "Full call stack, second function", $true)
+function Another-Function {
+    Write-Log -Dbg "Full call stack, second function" -WithCallStack
 }
 
 function main {
-    $script:logger.Log("DEBUG", "Full call stack, first function", $true)
-    Second-Function
+    New-Logger -Path "./call_stack.log" -ProgramName "Including the full call stack."
+    Write-Log -Dbg "Full call stack, first function" -WithCallStack
+
+    Another-Function
+
+    Close-Log
 }
 
-$script:logger = New-JsonLogger -LogFilePath "./call_stack.log" -ProgramName "Including the full call stack."
 main

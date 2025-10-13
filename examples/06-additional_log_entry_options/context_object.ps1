@@ -22,8 +22,9 @@ function main {
     $level = "DEBUG"
     $context = [Ctx]::new("Sample Context Object")
 
-    $script:logger.Log($level, "Current object state", $context)
+    New-Logger -Path "./context_object.log" -ProgramName "Context Object Example"
+    Write-Log -Level $level "Current object state" -Context $context
+    Close-Log
 }
 
-$script:logger = New-JsonLogger -LogFilePath "./context_object.log" -ProgramName "Context Object Test"
 main

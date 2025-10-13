@@ -50,7 +50,7 @@ enum Levels {
 
 $script:_Loggers = [ordered]@{}
 
-class JsonLogger {
+class Logger {
     [string]$Path
     [string]$ProgramName
     [string]$Encoding
@@ -61,7 +61,7 @@ class JsonLogger {
     [bool]$hasWarning = $false
     [bool]$hasError = $false
 
-    JsonLogger([string]$path, [string]$programName, [Encodings]$encoding = [Encodings]::utf8BOM, [bool]$overwrite = $false, [bool]$writeToHost = $false) {
+    Logger([string]$path, [string]$programName, [Encodings]$encoding = [Encodings]::utf8BOM, [bool]$overwrite = $false, [bool]$writeToHost = $false) {
         $this.Path = $path
         $this.ProgramName = $programName
         $this.Encoding = [Encodings].GetEnumName($encoding)
@@ -142,7 +142,7 @@ class JsonLogger {
         }
         elseif ($level -eq [Levels]::FATAL) {
             $this.AddToInitialEntry("hasFatal", $true)
-            $this.Close()
+            Close-Log
             exit 1
         }
     }
@@ -210,7 +210,7 @@ function New-Logger {
         [string]$ProgramName,
 
         [ValidateNotNullOrEmpty()]
-        [Encodings]$Encoding = "utf8BOM",
+        [Encodings]$Encoding = [Encodings]::utf8,
 
         [ValidateNotNullOrEmpty()]
         [string]$LoggerName = "default",
@@ -224,7 +224,7 @@ function New-Logger {
         throw "Unable to create logger '$LoggerName'. Use -LoggerName <name> to create a new logger with a different name or -Force to override this."
     }
 
-    $script:_Loggers[$LoggerName] = [JsonLogger]::new($Path, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
+    $script:_Loggers[$LoggerName] = [Logger]::new($Path, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
 }
 
 function Write-Log {
@@ -275,15 +275,15 @@ function Write-Log {
 
         [Parameter(Mandatory, ParameterSetName = "Info")]
         [Alias("I")]
-        [switch]$Info,
+        [switch]$Inf,
 
         [Parameter(Mandatory, ParameterSetName = "Warning")]
         [Alias("W")]
-        [switch]$Warning,
+        [switch]$Wrn,
 
         [Parameter(Mandatory, ParameterSetName = "Error")]
         [Alias("E")]
-        [switch]$Error,
+        [switch]$Err,
 
         [Parameter(Mandatory, ParameterSetName = "Debug")]
         [Alias("D")]
@@ -295,16 +295,26 @@ function Write-Log {
 
         [Parameter(Mandatory, ParameterSetName = "Fatal")]
         [Alias("F")]
-        [switch]$Fatal
+        [switch]$Ftl
     )
 
     if ($($PSCmdlet.ParameterSetName) -ne "LevelParam") {
-        if ($Info)        { $Level = "INFO" }
-        elseif ($Warning) { $Level = "WARNING"}
-        elseif ($Error)   { $Level = "ERROR" }
-        elseif ($Dbg)     { $Level = "DEBUG" }
-        elseif ($Vrb)     { $Level = "VERBOSE" }
-        else              { $Level = "FATAL" }
+        if ($Inf) { $Level = [Levels]::INFO }
+        elseif ($Wrn) { $Level = [Levels]::WARNING }
+        elseif ($Err) { $Level = [Levels]::ERROR }
+        elseif ($Dbg) { $Level = [Levels]::DEBUG }
+        elseif ($Vrb) { $Level = [Levels]::VERBOSE }
+        elseif ($Ftl) { $Level = [Levels]::FATAL }
+    }
+    elseif ($Level -in @("I", "W", "E", "D", "V", "F")) {
+        switch ($Level) {
+            "I" { $Level = [Levels]::INFO }
+            "W" { $Level = [Levels]::WARNING }
+            "E" { $Level = [Levels]::ERROR }
+            "D" { $Level = [Levels]::DEBUG }
+            "V" { $Level = [Levels]::VERBOSE }
+            "F" { $Level = [Levels]::FATAL }
+        }
     }
 
     if ($script:_Loggers.Count -eq 0) {
@@ -322,7 +332,7 @@ function Write-Log {
 function Close-Log {
     param(
         [Parameter(Mandatory, ParameterSetName = "WithMessage", Position = 0, ValueFromPipeline = $true)]
-        [string]$Message = "",
+        [string]$Message,
 
         [Parameter(ParameterSetName = "WithMessage")]
         [Parameter(ParameterSetName = "WithoutMessage")]
