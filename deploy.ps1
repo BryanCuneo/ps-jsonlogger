@@ -25,24 +25,26 @@ param(
     [Parameter(Mandatory = $true)]
     [version]$Version,
 
+    [string]$Author = "Bryan Cuneo",
+    [string]$ModuleName = "ps-jsonlogger",
+    [string]$LocalRepository = "BCPS",
     [switch]$Force
 )
 
 $FolderPath = Resolve-Path $FolderPath
 
-$module_name = "ps-jsonlogger"
-$copyright = "(c) $(Get-Date -f "yyyy") Bryan Cuneo. Made available under the terms of the MIT License."
-$description = "ps-jsonlogger is a small, dependency-free JSON logger designed to be easily embedded in automation scripts. It supports several log levels, context objects, full call stack inclusion, and writes compact, structured JSON entries to disk."
-$psd_path = Join-Path -Path $FolderPath -ChildPath "$module_name.psd1"
+$copyright = "(c) $(Get-Date -f "yyyy") $Author. Made available under the terms of the MIT License."
+$description = "ps-jsonlogger is a small, dependency-free structured logging module for PowerShell that offers both compact JSON logs on-disk and human-readble console output. It supports log levels, context objects, full call stack inclusion, and more."
+$psd_path = Join-Path -Path $FolderPath -ChildPath "$ModuleName.psd1"
 
 $parameters = @{
     Path              = $psd_path
-    RootModule        = $module_name
-    Author            = "Bryan Cuneo"
+    RootModule        = $ModuleName
+    Author            = $Author
     ModuleVersion     = $Version
     Copyright         = $copyright
     Description       = $description
-    FunctionsToExport = "New-JsonLogger"
+    FunctionsToExport = "New-Logger", "Write-Log", "Close-Log"
     LicenseUri        = "https://opensource.org/license/MIT"
     ProjectUri        = "https://github.com/BryanCuneo/ps-jsonlogger"
 }
@@ -59,7 +61,7 @@ else {
 }
 
 if ($Force) {
-    $pkg_path = "$((Get-PSRepository "BCPS").SourceLocation)$module_name.$($Version).nupkg"
+    $pkg_path = "$((Get-PSRepository $LocalRepository).SourceLocation)$ModuleName.$($Version).nupkg"
 
     Write-Host "Removing $pkg_path if it exists..." -NoNewline
     Remove-Item `
@@ -70,5 +72,5 @@ if ($Force) {
 }
 
 Write-Host "Publishing module..." -NoNewline
-Publish-Module -Path $FolderPath -Repository "BCPS"
+Publish-Module -Path $FolderPath -Repository $LocalRepository
 Write-Host " Done" -ForegroundColor Green
