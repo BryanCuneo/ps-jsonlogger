@@ -14,7 +14,6 @@ ps-jsonlogger is a small, dependency-free structured logging module for PowerShe
 If these features match your needs, ps-jsonlogger is for you! You can get started by checking out the [usage instructions](#usage-instructions---table-of-contents) below.
 
 
-
 ## Usage Instructions - Table of Contents
 
 - [Installation](#installation)
@@ -35,7 +34,7 @@ If these features match your needs, ps-jsonlogger is for you! You can get starte
 
 - [Creating Multiple Loggers](#creating-multiple-loggers)
 
-- [Notes on PowerShell Core 7 vs Windows PowerShell 5.1](#notes-on-powershell-core-7-vs-windows-powershell-5.1)
+- [Notes on PowerShell Core 7 vs Windows PowerShell 5.1](#notes-on-powershell-core-7-vs-windows-powershell-51)
 
 ## Installation
 ps-jsonlogger is available on PowerShell Gallery.

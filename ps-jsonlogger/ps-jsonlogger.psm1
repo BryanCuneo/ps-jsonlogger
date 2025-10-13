@@ -67,7 +67,7 @@ class Logger {
     [bool]$Overwrite
     [bool]$WriteToHost
 
-    [string]$JsonLoggerVersion = "1.0.0-alpha"
+    [string]$JsonLoggerVersion = "1.0.0"
     [bool]$hasWarning = $false
     [bool]$hasError = $false
 
@@ -299,6 +299,7 @@ Close-Log
 https://github.com/BryanCuneo/ps-jsonlogger
 #>
 function New-Logger {
+    [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -335,7 +336,11 @@ function New-Logger {
         throw "Unable to create logger '$LoggerName'. Use -LoggerName <name> to create a new logger with a different name or -Force to override this."
     }
 
-    $script:_Loggers[$LoggerName] = [Logger]::new($Path, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
+    $file = Get-ChildItem './myfile1.txt'
+    if ($PSCmdlet.ShouldProcess($file.Name)) {
+        $script:_Loggers[$LoggerName] = [Logger]::new($Path, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
+    }
+
 }
 
 <#

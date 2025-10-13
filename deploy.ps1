@@ -27,6 +27,7 @@ param(
 
     [string]$Author = "Bryan Cuneo",
     [string]$ModuleName = "ps-jsonlogger",
+    [string]$LocalRepository = "BCPS",
     [switch]$Force
 )
 
@@ -60,7 +61,7 @@ else {
 }
 
 if ($Force) {
-    $pkg_path = "$((Get-PSRepository "BCPS").SourceLocation)$ModuleName.$($Version).nupkg"
+    $pkg_path = "$((Get-PSRepository $LocalRepository).SourceLocation)$ModuleName.$($Version).nupkg"
 
     Write-Host "Removing $pkg_path if it exists..." -NoNewline
     Remove-Item `
@@ -71,5 +72,5 @@ if ($Force) {
 }
 
 Write-Host "Publishing module..." -NoNewline
-Publish-Module -Path $FolderPath -Repository "BCPS"
+Publish-Module -Path $FolderPath -Repository $LocalRepository
 Write-Host " Done" -ForegroundColor Green
