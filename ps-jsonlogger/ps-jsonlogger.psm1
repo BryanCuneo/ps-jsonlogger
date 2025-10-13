@@ -199,6 +199,77 @@ class LogEntry {
     }
 }
 
+<#
+.SYNOPSIS
+Creates a new Logger instance.
+
+.DESCRIPTION
+The New-Logger function initializes a Logger that writes JSON entries to a
+sepcified file. You can have multiple loggers in the same script by utilizing
+the -LoggerName parameter, and you can use any of PowerShell's supported
+encoding options with the -Encoding parameter (default: utf8).
+
+.PARAMETER Path
+The file path where the log file will be written. It is mandatory and cannot be
+null or empty.
+
+.PARAMETER ProgramName
+Friendly name for the program that is logging. It is mandatory and cannot be
+null or empty.
+
+.PARAMETER Encoding
+Text encoding used for the log file. Available options:
+ascii, bigendianunicode, oem, unicode, utf7, utf8, utf8BOM, utf8NoBOM, utf32
+Default: utf8
+
+.PARAMETER LoggerName
+An optional parameter to use if you want to create multiple loggers. By
+default, it is set to "default" and you can safely ignore it.
+
+.PARAMETER Overwrite
+A switch that, when set, allows overwriting existing log files.
+Default: off
+
+.PARAMETER WriteToHost
+A switch that, when set, allows log messages to be output to the host via the
+Write-Host cmdlet (this is in addition to being written to disk). Default: off
+
+.PARAMETER Force
+A switch that, when set, allows the creation of a logger that has the
+same name as an existing logger. Default: off
+
+.INPUTS
+None.
+
+.OUTPUTS
+None.
+
+.EXAMPLE
+New-Logger -Path "C:\logs\app.log" -ProgramName "MyApplication"
+
+Creates a new logger that writes to "C:\logs\app.log" for
+"MyApplication" with default parameters.
+
+.EXAMPLE
+New-Logger `
+    -Path "C:\logs\app.log" `
+    -ProgramName "MyApplication" `
+    -LoggerName "MyLogger" `
+    -Overwrite `
+    -Force
+
+Creates a logger named "MyLogger" that overwrites any existing log
+file at "C:\logs\app.log".
+
+.LINK
+Write-Log
+
+.LINK
+Close-Log
+
+.LINK
+https://github.com/BryanCuneo/ps-jsonlogger
+#>
 function New-Logger {
     param(
         [Parameter(Mandatory)]
