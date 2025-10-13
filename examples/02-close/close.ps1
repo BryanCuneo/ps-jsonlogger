@@ -1,5 +1,5 @@
 Import-Module ps-jsonlogger
 
-$logger = New-JsonLogger -LogFilePath "./close.log" -ProgramName "close.log"
-$logger.Log("Hello, World!")
-$logger.Close()
+New-Logger -Path "./close.log" -ProgramName "Close-Log Example"
+Write-Log "Hello, World!"
+Close-Log "Goodbye, Cruel World!"

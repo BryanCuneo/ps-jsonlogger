@@ -1,4 +1,4 @@
 Import-Module ps-jsonlogger
 
-$logger = New-JsonLogger -LogFilePath "./basic_logging.log" -ProgramName "Basic Logging"
-$logger.Log("Hello, World!")
+New-Logger -Path "./basic_logging.log" -ProgramName "Basic Logging Example"
+Write-Log "Hello, World!"
