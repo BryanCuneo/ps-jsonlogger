@@ -321,8 +321,8 @@ A switch that, when set, includes the full call stack from Get-PSCallStack in
 the log entry.
 
 .PARAMETER Logger
-The name of the logger where the message will be written.
-Defaults to "default". Must not be null or empty.
+If you have more than one logger instance, this parameter allows you to specify
+which one to write to. If not specified, the default logger will be used.
 
 .PARAMETER Level
 The severity level of the log message. Valid options are INFO, I, WARNING, W,
@@ -345,6 +345,12 @@ A switch that can be used to specify the log level as VERBOSE.
 
 .PARAMETER Ftl
 A switch that can be used to specify the log level as FATAL.
+
+.INPUTS
+A string message.
+
+.OUTPUTS
+None.
 
 .EXAMPLE
 Write-Log "Hello, World!"
@@ -481,6 +487,43 @@ function Write-Log {
     $script:_Loggers[$Logger].Log($Level, $Message, (Get-PSCallStack)[1].ToString(), $Context, $WithCallStack)
 }
 
+<#
+.SYNOPSIS
+Closes a logger instance with an optional message.
+
+.DESCRIPTION
+The Close-Log function is used to close an existing logger instance. It will
+write a closing entry (with an optional message) to the file and then remove
+the logger from the active logger pool.
+
+.PARAMETER Message
+An optional message to log when closing the logger. It can be piped to the
+function, given as as positional parameter, or given explicitly as -Message.
+
+.PARAMETER Logger
+If you have more than one logger instance, this parameter allows you to specify
+which one to close. If not specified, the default logger will be closed.
+
+.INPUTS
+A string message.
+
+.OUTPUTS
+None.
+
+.EXAMPLE
+Close-Log "All Done!"
+
+Closes the default logger with thes message, "All Done!".
+
+.LINK
+New-Logger
+
+.LINK
+Write-Log
+
+.LINK
+https://github.com/BryanCuneo/ps-jsonlogger
+#>
 function Close-Log {
     param(
         [Parameter(Mandatory, ParameterSetName = "WithMessage", Position = 0, ValueFromPipeline = $true)]
