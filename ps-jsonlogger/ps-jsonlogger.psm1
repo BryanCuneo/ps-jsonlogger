@@ -142,7 +142,7 @@ class Logger {
         }
         elseif ($level -eq [Levels]::FATAL) {
             $this.AddToInitialEntry("hasFatal", $true)
-            Close-Log
+            Cleanup
             exit 1
         }
     }
@@ -504,6 +504,10 @@ function, given as as positional parameter, or given explicitly as -Message.
 If you have more than one logger instance, this parameter allows you to specify
 which one to close. If not specified, the default logger will be closed.
 
+.PARAMETER All
+A switch that, when set, closes all loggers. This parameter cannot be used with
+other parameters.
+
 .INPUTS
 A string message.
 
@@ -532,12 +536,19 @@ function Close-Log {
         [Parameter(ParameterSetName = "WithMessage")]
         [Parameter(ParameterSetName = "WithoutMessage")]
         [ValidateNotNullOrEmpty()]
-        [string]$Logger = "default"
+        [string]$Logger = "default",
+
+        [Parameter(Mandatory, ParameterSetName = "CloseAll")]
+        [switch]$All
     )
 
     if ($script:_Loggers.Count -eq 0) {
         Write-Warning "There are no loggers to close."
         return
+    }
+
+    if ($All) {
+        Cleanup
     }
 
     if (-not $script:_Loggers.Contains($Logger)) {

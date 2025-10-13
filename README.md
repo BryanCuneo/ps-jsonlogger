@@ -13,7 +13,7 @@ Write-Log "Hello, World!"
 
 ##### basic_logging.log
 ```json
-{"timestamp":"2025-10-12T21:10:25.6091212-05:00","level":"START","programName":"Basic Logging Example","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0-alpha"}
+{"timestamp":"2025-10-12T21:10:25.6091212-05:00","level":"START","programName":"Basic Logging Example","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0"}
 {"timestamp":"2025-10-12T21:10:25.6163049-05:00","level":"INFO","message":"Hello, World!","calledFrom":"at <ScriptBlock>, C:\\basic_logging.ps1: line 4"}
 ```
 
@@ -32,15 +32,17 @@ Close-Log
 
 ##### close.log
 ```JSON
-{"timestamp":"2025-10-12T21:14:02.3854661-05:00","level":"START","programName":"Close-Log Example","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0-alpha"}
+{"timestamp":"2025-10-12T21:14:02.3854661-05:00","level":"START","programName":"Close-Log Example","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0"}
 {"timestamp":"2025-10-12T21:14:02.3860781-05:00","level":"INFO","message":"Hello, World!","calledFrom":"at <ScriptBlock>, C:\\close.ps1: line 4"}
 {"timestamp":"2025-10-12T21:14:02.3998504-05:00","level":"END"}
 ```
 
-You can also call `Close-Log` with a message string. E.g. `$logger.Close("Done!")` will result in a closing line like this instead:
+You can also call `Close-Log` with a message string. E.g. `Close-Log "Done!"` will result in a closing line like this instead:
 ```JSON
 {"timestamp":"2025-10-12T21:16:20.8704909-05:00","level":"END","message":"Goodbye, Cruel World!"}
 ```
+
+If you have multiple loggers open, you can close all of them at once by calling `Close-Log -All`.
 
 ### Log Levels
 The following log levels are available: `INFO`, `WARNING`, `ERROR`, `FATAL`, `DEBUG`, `VERBOSE`. Both `FATAL` and `VERBOSE` always includes the full call stack in the log entry. Additionally, `FATAL` will close the log and call `exit 1`, terminating the script. You can specify which log level you want to use like so:
@@ -62,7 +64,7 @@ Write-Log -Level "DEBUG" "This line will never be logged because the preceeding 
 
 ##### log_levels_part_1.log
 ```JSON
-{"timestamp":"2025-10-12T21:35:29.4843863-05:00","level":"START","programName":"Log Levels Example 1","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0-alpha","hasWarning":true,"hasError":true,"hasFatal":true}
+{"timestamp":"2025-10-12T21:35:29.4843863-05:00","level":"START","programName":"Log Levels Example 1","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0","hasWarning":true,"hasError":true,"hasFatal":true}
 {"timestamp":"2025-10-12T21:35:29.4856272-05:00","level":"INFO","message":"Info level test","calledFrom":"at <ScriptBlock>, C:\\log_levels_part_1.ps1: line 5"}
 {"timestamp":"2025-10-12T21:35:29.4988232-05:00","level":"WARNING","message":"Level test - warning","calledFrom":"at <ScriptBlock>, C:\\log_levels_part_1.ps1: line 6"}
 {"timestamp":"2025-10-12T21:35:29.5336026-05:00","level":"ERROR","message":"Level test - error","calledFrom":"at <ScriptBlock>, C:\\log_levels_part_1.ps1: line 7"}
@@ -72,7 +74,7 @@ Write-Log -Level "DEBUG" "This line will never be logged because the preceeding 
 {"timestamp":"2025-10-12T21:35:29.6073653-05:00","level":"END"}
 ```
 
-There are a couple ways to specify the log level, and all are case-insensitive. They are functionally equivalent, so you can use whichever you prefer:
+There are a couple ways to specify the log level, all are case-insensitive, and they are functionally equivalent, so you can use whichever you prefer:
 * The `-Level` parameter (e.g. `-Level "ERROR"` or `-Level "E"`)
 * Per-level parameters (e.g. `-Err`, `-E`)
 * If no level is set, the default is `INFO`
@@ -96,7 +98,7 @@ Close-Log
 
 ##### log_levels_part_2.log
 ```JSON
-{"timestamp":"2025-10-12T21:51:34.9483648-05:00","level":"START","programName":"Log Levels Example 2","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0-alpha","hasWarning":true,"hasError":true}
+{"timestamp":"2025-10-12T21:51:34.9483648-05:00","level":"START","programName":"Log Levels Example 2","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0","hasWarning":true,"hasError":true}
 {"timestamp":"2025-10-12T21:51:34.9493238-05:00","level":"INFO","message":"If you don't specify a level, INFO is the default","calledFrom":"at <ScriptBlock>, C:\\log_levels_part_2.ps1: line 5"}
 {"timestamp":"2025-10-12T21:51:34.9585447-05:00","level":"WARNING","message":"All levels can be shortened to their first letter","calledFrom":"at <ScriptBlock>, C:\\log_levels_part_2.ps1: line 6"}
 {"timestamp":"2025-10-12T21:51:34.9898127-05:00","level":"ERROR","message":"Level arguments are case-insensitive","calledFrom":"at <ScriptBlock>, C:\\log_levels_part_2.ps1: line 7"}
@@ -109,7 +111,7 @@ When a log file contains a warning, an error, and/or a fatal entry, the initial 
 
 ##### Initial entry of log_levels_part_1.log
 ```JSON
-{"timestamp":"2025-10-12T21:35:29.4843863-05:00","level":"START","programName":"Log Levels Example 1","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0-alpha","hasWarning":true,"hasError":true,"hasFatal":true}
+{"timestamp":"2025-10-12T21:35:29.4843863-05:00","level":"START","programName":"Log Levels Example 1","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0","hasWarning":true,"hasError":true,"hasFatal":true}
 ```
 
 ### Writing Log Output to the Console
@@ -145,7 +147,7 @@ PS > ./write_to_host.ps1
 PS >
 ```
 
-_Note: In an actual PowerShell console, warnings will have yellow text and errors will have red text. Unfortunately GitHub`s markdown does not provide a way to color text within a code block so those colors are not displayed above._
+_Note: In an actual PowerShell console, warnings will have yellow text and errors and fatal errors will have red text. Due to a limitation of GitHub`s markdown, those colors are not displayed above._
 
 ### Overwriting Existing Log Files
 Normally when you try to write to an existing file, you'll receive an error:
@@ -283,8 +285,70 @@ main
 
 ##### call_stack.log
 ```JSON
-{"timestamp":"2025-10-12T22:17:44.2150565-05:00","level":"START","programName":"Including the full call stack.","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0-alpha"}
+{"timestamp":"2025-10-12T22:17:44.2150565-05:00","level":"START","programName":"Including the full call stack.","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0"}
 {"timestamp":"2025-10-12T22:17:44.2157187-05:00","level":"DEBUG","message":"Full call stack, first function","calledFrom":"at main, C:\\call_stack.ps1: line 9","callStack":"at LogEntry, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 193 at Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 116 at Write-Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 329 at main, C:\\call_stack.ps1: line 9 at <ScriptBlock>, C:\\call_stack.ps1: line 16 at <ScriptBlock>, <No file>: line 1"}
 {"timestamp":"2025-10-12T22:17:44.2263534-05:00","level":"DEBUG","message":"Full call stack, second function","calledFrom":"at Another-Function, C:\\call_stack.ps1: line 4","callStack":"at LogEntry, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 193 at Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 116 at Write-Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 329 at Another-Function, C:\\call_stack.ps1: line 4 at main, C:\\call_stack.ps1: line 11 at <ScriptBlock>, C:\\call_stack.ps1: line 16 at <ScriptBlock>, <No file>: line 1"}
 {"timestamp":"2025-10-12T22:17:44.2421852-05:00","level":"END"}
+```
+
+### Creating Multiple Loggers
+You can create multiple loggers in the same script by calling `New-Logger`  with the `-LoggerName` parameter. This will create a new logger with a different name, and you can use it in `Write-Log` and `Close-Log` by specifying the logger name as the `-Logger` parameter. Under the hood, the default logger is always named "default" and you can safely omit the -LoggerName parameter if you don't need multiple loggers.
+
+##### multiple_loggers.ps1
+```PowerShell
+Import-Module ps-jsonlogger
+
+function DoSomething {
+    Write-Log -Level "INFO" -Message "This will go to the default logger."
+}
+
+function DoSomethingDangerous {
+    throw "Be careful!"
+}
+
+function DoSomethingREALLYDangerous {
+    throw "Now you've done it..."
+}
+
+function main {
+    New-Logger -Path "./multiple_loggers_default.log" -ProgramName "Multiple Loggers Example"
+    New-Logger -Path "./multiple_loggers_errors.log" -ProgramName "Multiple Loggers Example" -LoggerName "errors"
+
+    DoSomething
+
+    try {
+        DoSomethingDangerous
+    }
+    catch {
+        Write-Log -Logger "errors"-Level "ERROR" -Message "This will go to the errors logger."
+    }
+
+    try {
+        DoSomethingREALLYDangerous
+    }
+    catch {
+        # If you don't specify -Logger, the default logger will be closed.
+        Close-Log -Message "Error encountered. Closing."
+
+        # FATAL errors will both close the associated logger and exit the script.
+        Write-Log -Logger "errors" -Level "FATAL" -Message "Whoops..."
+    }
+}
+
+main
+```
+
+##### multiple_loggers_default.log
+```JSON
+{"timestamp":"2025-10-13T11:03:34.6137242-05:00","level":"START","programName":"Multiple Loggers Example","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0"}
+{"timestamp":"2025-10-13T11:03:34.6219973-05:00","level":"INFO","message":"This will go to the default logger.","calledFrom":"at DoSomething, C:\\multiple_loggers.ps1: line 4"}
+{"timestamp":"2025-10-13T11:03:34.6571757-05:00","level":"END","message":"Error encountered. Closing."}
+```
+
+##### multiple_loggers_errors.log
+```JSON
+{"timestamp":"2025-10-13T11:03:34.6179096-05:00","level":"START","programName":"Multiple Loggers Example","PSVersion":"7.5.3","jsonLoggerVersion":"1.0.0","hasError":true,"hasFatal":true}
+{"timestamp":"2025-10-13T11:03:34.6391387-05:00","level":"ERROR","message":"This will go to the errors logger.","calledFrom":"at main, C:\\multiple_loggers.ps1: line 25"}
+{"timestamp":"2025-10-13T11:03:34.6646649-05:00","level":"FATAL","message":"Whoops...","calledFrom":"at main, C:\\multiple_loggers.ps1: line 36","callStack":"at LogEntry, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 193 at Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 116 at Write-Log, C:\\PowerShell\\Modules\\ps-jsonlogger\\1.0.0\\ps-jsonlogger.psm1: line 487 at main, C:\\multiple_loggers.ps1: line 36 at <ScriptBlock>, C:\\multiple_loggers.ps1: line 40 at <ScriptBlock>, <No file>: line 1"}
+{"timestamp":"2025-10-13T11:03:34.6908570-05:00","level":"END"}
 ```
