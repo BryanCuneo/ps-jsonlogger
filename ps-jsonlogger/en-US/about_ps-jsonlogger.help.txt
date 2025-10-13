@@ -2,7 +2,7 @@ TOPIC
     about_ps-jsonlogger
 
 SYNOPSIS
-    Lightweight, dependency-free JSON logger for PowerShell scripts.
+    Simple, dependency-free JSON logger for PowerShell scripts.
 
 LONG DESCRIPTION
     ps-jsonlogger is a small, dependency-free structured logging module for
@@ -11,22 +11,37 @@ LONG DESCRIPTION
     inclusion, and more."
 
 EXAMPLES
+    #-----------------------#
+    # Basic Logging Example #
+    #-----------------------#
     Import-Module ps-jsonlogger
 
-    $logger = New-JsonLogger `
-        -LogFilePath "./basic_logging_example.log" `
-        -ProgramName "Basic Logging Example" `
-        -WriteToHost
+    New-Logger -Path "./testing.log" -ProgramName "Log Testing Example"
 
-    $logger.Log("Hello, World!")
-    $logger.Log("INFO", "INFO is the default, but you can also specify it.")
-    $logger.Log("WARNING", "This text will be yellow in the console.")
-    $logger.Log("ERROR", "And this text will be red.")
-    $logger.Log("VERBOSE", "VERBOSE logs always include the full call stack.")
+    Write-Log -Level "INFO" "Info level test"
+    Write-Log -Level "WARNING" "Level test - warning"
+    Write-Log -Level "ERROR" "Level test - error"
+    Write-Log -Level "DEBUG" "Level test - debug"
+    Write-Log -Level "VERBOSE" "Level test - verbose"
 
-    $logger.Close("You can write a final log entry to the file like this.")
-    $logger.Log("FATAL", "For terminating errors, use FATAL to call 'exit 1'.")
-    $logger.Log("DEBUG", "This line will never be logged.")
+    Close-Log
+
+    #---------------#
+    # FATAL example #
+    #---------------#
+    Import-Module ps-jsonlogger
+
+    New-Logger -Path "./log_levels_part_2.log" -ProgramName "Log Levels Example 2"
+
+    Write-Log "If you don't specify a level, INFO is the default"
+    Write-Log -Level "W" "All levels can be shortened to their first letter"
+    Write-Log -Level "error" "Level arguments are case-insensitive"
+    Write-Log -Dbg "Instead of -Level, you can use the per-level parameters"
+    Write-Log -V "If you want to be REALLY consice, you can also shorten the per-level parameters"
+
+    Write-Log -Level "FATAL" "For terminating errors, use FATAL to automatically call 'Close-Log' and 'exit 1'."
+    Write-Log -Level "DEBUG" "This line will never be logged because the preceeding line exited the program."
+
 
 SEE ALSO
     https://github.com/BryanCuneo/ps-jsonlogger/blob/main/README.md
