@@ -36,6 +36,8 @@ If these features match your needs, ps-jsonlogger is for you! You can get starte
 
 - [Notes on PowerShell Core 7 vs Windows PowerShell 5.1](#notes-on-powershell-core-7-vs-windows-powershell-51)
 
+- [Examples](#examples)
+
 ## Installation
 ps-jsonlogger will be avialable from the PowerShell Gallery as soon as the [PSGallery login issues](https://github.com/PowerShell/PowerShellGallery/issues/330) are resolved. In the meantime, you can download it directly from the [releases page](https://github.com/BryanCuneo/ps-jsonlogger/releases).
 
@@ -422,5 +424,10 @@ Encoding 'utf8BOM' is not supported on PowerShell v5. Please try again with a su
 
 ### Spercial Characters in JSON
 Powershell v5 does not convert all special characters in JSON strings the same way as PowerShell v7. This means that you may see some characters like `\u003c` in your log files in v5 instead of `<` in v7 or `\u0027` instead of `'`. PowerShell v5 will still import these files just fine and the initial log entry includes the `powerShellVersion` property that can be utilized in any parsers to ensure proper JSON deserialization.
+
+[Back to the table of contents](#usage-instructions---table-of-contents)
+
+## Examples
+The [examples folder](examples) contains all the scripts used in this README.
 
 [Back to the table of contents](#usage-instructions---table-of-contents)
