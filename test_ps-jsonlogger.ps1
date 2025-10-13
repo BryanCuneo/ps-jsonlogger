@@ -101,13 +101,7 @@ function Test-Fatal {
 }
 
 function main {
-    $logger = {
-        Path            = "./testing.log"
-        ProgramName     = "Test Script for ps-jsonlogger"
-        Overwrite       = $true
-        WriteToHost     = $true
-    }
-    New-Logger @logger
+    New-Logger -Path "./testing.log" -ProgramName "Test Script for ps-jsonlogger" -Overwrite -WriteToHost
 
     Test-Info
     Test-Warning

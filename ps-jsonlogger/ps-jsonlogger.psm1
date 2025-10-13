@@ -39,7 +39,7 @@ enum Levels {
     VERBOSE
 }
 
-[hashtable]$script:shortLevels = @{
+[hashtable]$script:_ShortLevels = @{
     "INFO"    = "INF"
     "WARNING" = "WRN"
     "ERROR"   = "ERR"
@@ -195,7 +195,7 @@ class LogEntry {
     }
 
     [string] ToString() {
-        return "[$($script:shortLevels[$this.level])] $($this.message)"
+        return "[$($script:_ShortLevels[$this.level])] $($this.message)"
     }
 }
 
@@ -351,5 +351,24 @@ function Close-Log {
     $script:_Loggers[$Logger].Close($Message)
     $script:_Loggers.Remove($Logger)
 }
+
+function Cleanup {
+    $script:_Loggers.Values | ForEach-Object {
+        $_.Close()
+    }
+}
+
+# PS module lifecycle management kind of sucks. The PowerShell.Exiting and
+# OnRemove events are unreliable and don't fire in most scenarious you would
+# assume they do. However, they're the best options we have to attempt to clean
+# up the loggers if the user doesn't call Close-Log.
+Register-EngineEvent -SourceIdentifier PowerShell.Exiting -SupportEvent -Action {
+    Cleanup
+}
+
+$OnRemoveScript = {
+    Cleanup
+}
+$ExecutionContext.SessionState.Module.OnRemove += $OnRemoveScript
 
 Export-ModuleMember -Function New-Logger, Write-Log, Close-Log
