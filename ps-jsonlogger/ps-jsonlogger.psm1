@@ -252,11 +252,11 @@ Creates a new logger that writes to "C:\logs\app.log" for
 
 .EXAMPLE
 New-Logger `
-    -Path "C:\logs\app.log" `
-    -ProgramName "MyApplication" `
-    -LoggerName "MyLogger" `
-    -Overwrite `
-    -Force
+        -Path "C:\logs\app.log" `
+        -ProgramName "MyApplication" `
+        -LoggerName "MyLogger" `
+        -Overwrite `
+        -Force
 
 Creates a logger named "MyLogger" that overwrites any existing log
 file at "C:\logs\app.log".
@@ -298,6 +298,87 @@ function New-Logger {
     $script:_Loggers[$LoggerName] = [Logger]::new($Path, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
 }
 
+<#
+.SYNOPSIS
+Writes structured JSON log entries using a Logger instance from New-Logger.
+
+.DESCRIPTION
+The Write-Log function allows you to log messages with different severity
+levels: INFO, WARNING, ERROR, DEBUG, VERBOSE, and FATAL. You can also include
+contextual information and/or call stack details.
+
+.PARAMETER Message
+The log message to be recorded. This parameter is mandatory and cannot be null
+or empty. It can be piped to the function, given as as positional parameter, or
+given explicitly as -Message.
+
+.PARAMETER Context
+An optional array of PowerShell objects to provide additional contextual info
+about to the log entry.
+
+.PARAMETER WithCallStack
+A switch that, when set, includes the full call stack from Get-PSCallStack in
+the log entry.
+
+.PARAMETER Logger
+The name of the logger where the message will be written.
+Defaults to "default". Must not be null or empty.
+
+.PARAMETER Level
+The severity level of the log message. Valid options are INFO, I, WARNING, W,
+ERROR, E, DEBUG, D, VERBOSE, V, FATAL, and F. Default: INFO
+
+.PARAMETER Inf
+A switch that can be used to specify the log level as INFO.
+
+.PARAMETER Wrn
+A switch that can be used to specify the log level as WARNING.
+
+.PARAMETER Err
+A switch that can be used to specify the log level as ERROR.
+
+.PARAMETER Dbg
+A switch that can be used to specify the log level as DEBUG.
+
+.PARAMETER Vrb
+A switch that can be used to specify the log level as VERBOSE.
+
+.PARAMETER Ftl
+A switch that can be used to specify the log level as FATAL.
+
+.EXAMPLE
+Write-Log "Hello, World!"
+
+Logs an message with the default level of INFO.
+
+.EXAMPLE
+Write-Log -Level "W" -Message "This is a warning message."
+
+Logs a warning message.
+
+.EXAMPLE
+    $context = [Ordered]@{
+        Name = "John Doe"
+        Age  = 42
+    }
+    "This is an error message with context." | Write-Log -Err -Context $context
+
+Logs an error message along with additional context information.
+
+.EXAMPLE
+Write-Log -F "An unrecoverable error has occurred. Exiting."
+
+Logs a FATAL error that will close the log cause the script to exit.
+
+.LINK
+New-Logger
+
+.LINK
+Close-Log
+
+.LINK
+https://github.com/BryanCuneo/ps-jsonlogger
+#>
 function Write-Log {
     [CmdletBinding(DefaultParameterSetName = "LevelParam")]
     param(
