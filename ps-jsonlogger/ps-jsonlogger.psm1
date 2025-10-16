@@ -132,18 +132,24 @@ class Logger {
         try {
             if ($null -ne $context) {
                 $logEntry = [LogEntry]::new($level, $message, $calledFrom, $context, $includeCallStack)
-                $jsonEntryJson = $logEntry | ConvertTo-Json -Compress -Depth 100
+                try {
+                    $logEntryJson = $logEntry | ConvertTo-Json -Compress -Depth 100
+                }
+                catch {
+                    Write-Warning "Failed to fully convert full context object to JSON. Falling back simplifed JSON."
+                    $logEntryJson = $logEntry | ConvertTo-Json -Compress
+                }
             }
             else {
                 $logEntry = [LogEntry]::new($level, $message, $calledFrom, $null, $includeCallStack)
-                $jsonEntryJson = $logEntry | ConvertTo-Json -Compress
+                $logEntryJson = $logEntry | ConvertTo-Json -Compress
             }
         }
         catch {
             throw $_
         }
 
-        Add-Content -Path $this.Path -Value $jsonEntryJson -Encoding $this.Encoding -ErrorAction Stop
+        Add-Content -Path $this.Path -Value $logEntryJson -Encoding $this.Encoding -ErrorAction Stop
 
         if ($this.WriteToHost) {
             switch ($level) {
