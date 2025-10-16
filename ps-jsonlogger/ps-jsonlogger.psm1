@@ -30,6 +30,15 @@ enum Encodings {
     utf32
 }
 
+enum Levels {
+    INFO
+    WARNING
+    ERROR
+    FATAL
+    DEBUG
+    VERBOSE
+}
+
 $Ps5Encodings = @(
     "ascii",
     "bigendianunicode",
@@ -39,15 +48,6 @@ $Ps5Encodings = @(
     "utf8",
     "utf32"
 )
-
-enum Levels {
-    INFO
-    WARNING
-    ERROR
-    FATAL
-    DEBUG
-    VERBOSE
-}
 
 [hashtable]$script:_ShortLevels = @{
     "INFO"    = "INF"
@@ -587,7 +587,6 @@ function Close-Log {
     )
 
     if ($script:_Loggers.Count -eq 0) {
-        Write-Warning "There are no loggers to close."
         return
     }
 
