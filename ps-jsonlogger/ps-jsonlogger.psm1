@@ -67,7 +67,7 @@ class Logger {
     [bool]$Overwrite
     [bool]$WriteToHost
 
-    [string]$JsonLoggerVersion = "1.0.0"
+    [string]$JsonLoggerVersion = "1.0.1"
     [bool]$hasWarning = $false
     [bool]$hasError = $false
 
