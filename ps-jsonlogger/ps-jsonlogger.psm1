@@ -30,6 +30,15 @@ enum Encodings {
     utf32
 }
 
+enum Levels {
+    INFO
+    WARNING
+    ERROR
+    FATAL
+    DEBUG
+    VERBOSE
+}
+
 $Ps5Encodings = @(
     "ascii",
     "bigendianunicode",
@@ -39,15 +48,6 @@ $Ps5Encodings = @(
     "utf8",
     "utf32"
 )
-
-enum Levels {
-    INFO
-    WARNING
-    ERROR
-    FATAL
-    DEBUG
-    VERBOSE
-}
 
 [hashtable]$script:_ShortLevels = @{
     "INFO"    = "INF"
@@ -67,7 +67,7 @@ class Logger {
     [bool]$Overwrite
     [bool]$WriteToHost
 
-    [string]$JsonLoggerVersion = "1.0.0"
+    [string]$JsonLoggerVersion = "1.0.1"
     [bool]$hasWarning = $false
     [bool]$hasError = $false
 
@@ -132,18 +132,24 @@ class Logger {
         try {
             if ($null -ne $context) {
                 $logEntry = [LogEntry]::new($level, $message, $calledFrom, $context, $includeCallStack)
-                $jsonEntryJson = $logEntry | ConvertTo-Json -Compress -Depth 100
+                try {
+                    $logEntryJson = $logEntry | ConvertTo-Json -Compress -Depth 100
+                }
+                catch {
+                    Write-Warning "Failed to fully convert full context object to JSON. Falling back simplifed JSON."
+                    $logEntryJson = $logEntry | ConvertTo-Json -Compress
+                }
             }
             else {
                 $logEntry = [LogEntry]::new($level, $message, $calledFrom, $null, $includeCallStack)
-                $jsonEntryJson = $logEntry | ConvertTo-Json -Compress
+                $logEntryJson = $logEntry | ConvertTo-Json -Compress
             }
         }
         catch {
             throw $_
         }
 
-        Add-Content -Path $this.Path -Value $jsonEntryJson -Encoding $this.Encoding -ErrorAction Stop
+        Add-Content -Path $this.Path -Value $logEntryJson -Encoding $this.Encoding -ErrorAction Stop
 
         if ($this.WriteToHost) {
             switch ($level) {
@@ -587,7 +593,6 @@ function Close-Log {
     )
 
     if ($script:_Loggers.Count -eq 0) {
-        Write-Warning "There are no loggers to close."
         return
     }
 
