@@ -45,6 +45,17 @@ function Test-Info {
     "Info test 5 - `$message | Write-Log -I -Context @(`$context, `$string) -WithCallStack" | Write-Log -I -Context @($context, "additional context here") -WithCallStack
 }
 
+function Test-Success {
+    $level = "SUCCESS"
+    $level_short = "S"
+    $context = [Ctx]::new("Context - SUCCESS")
+
+    Write-Log -Level $level "Success test 1 - Write-Log -Level `"$level`" `$message"
+    Write-Log -Scs "Success test 2 - Write-Log -Scs `$message -Context `$context" -Context $context
+    "Success test 3 - `$message | Write-Log -Level `"$level_short`" -WithCallStack" | Write-Log -Level $level_short -WithCallStack
+    "Success test 4 - `$message | Write-Log -S -Context @(`$context, `$string) -WithCallStack" | Write-Log -S -Context @($context, "additional context here") -WithCallStack
+}
+
 function Test-Warning {
     $level = "WARNING"
     $level_short = "W"
@@ -103,6 +114,7 @@ function Test-Fatal {
 function main {
     New-Logger -Path "./testing.log" -ProgramName "Test Script for ps-jsonlogger" -Overwrite -WriteToHost
     Test-Info
+    Test-Success
     Test-Warning
     Test-Error
     Test-Debug

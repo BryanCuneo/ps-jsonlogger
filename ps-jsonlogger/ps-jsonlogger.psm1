@@ -20,6 +20,7 @@
 
 enum Levels {
     INFO
+    SUCCESS
     WARNING
     ERROR
     FATAL
@@ -43,6 +44,7 @@ else {
 
 [hashtable]$script:_ShortLevels = @{
     "INFO"    = "INF"
+    "SUCCESS" = "SCS"
     "WARNING" = "WRN"
     "ERROR"   = "ERR"
     "FATAL"   = "FTL"
@@ -145,6 +147,7 @@ class Logger {
 
         if ($this.WriteToHost) {
             switch ($level) {
+                "SUCCESS" { Write-Host $logEntry.ToString() -ForegroundColor Green }
                 "WARNING" { Write-Host $logEntry.ToString() -ForegroundColor Yellow }
                 "ERROR" { Write-Host $logEntry.ToString() -ForegroundColor Red }
                 "FATAL" { Write-Host $logEntry.ToString() -ForegroundColor Red }
@@ -374,11 +377,14 @@ If you have more than one logger instance, this parameter allows you to specify
 which one to write to. If not specified, the default logger will be used.
 
 .PARAMETER Level
-The severity level of the log message. Valid options are INFO, I, WARNING, W,
-ERROR, E, DEBUG, D, VERBOSE, V, FATAL, and F. Default: INFO
+The severity level of the log message. Valid options are INFO, I, SUCCESS, S
+WARNING, W, ERROR, E, DEBUG, D, VERBOSE, V, FATAL, and F. Default: INFO
 
 .PARAMETER Inf
 A switch that can be used to specify the log level as INFO.
+
+.PARAMETER Scs
+A switch that can be used to specify the log level as SUCCESS.
 
 .PARAMETER Wrn
 A switch that can be used to specify the log level as WARNING.
@@ -439,6 +445,7 @@ function Write-Log {
     param(
         [Parameter(ParameterSetName = "LevelParam")]
         [Parameter(ParameterSetName = "Info")]
+        [Parameter(ParameterSetName = "Success")]
         [Parameter(ParameterSetName = "Warning")]
         [Parameter(ParameterSetName = "Error")]
         [Parameter(ParameterSetName = "Debug")]
@@ -450,6 +457,7 @@ function Write-Log {
 
         [Parameter(ParameterSetName = "LevelParam")]
         [Parameter(ParameterSetName = "Info")]
+        [Parameter(ParameterSetName = "Success")]
         [Parameter(ParameterSetName = "Warning")]
         [Parameter(ParameterSetName = "Error")]
         [Parameter(ParameterSetName = "Debug")]
@@ -459,6 +467,7 @@ function Write-Log {
 
         [Parameter(ParameterSetName = "LevelParam")]
         [Parameter(ParameterSetName = "Info")]
+        [Parameter(ParameterSetName = "Success")]
         [Parameter(ParameterSetName = "Warning")]
         [Parameter(ParameterSetName = "Error")]
         [Parameter(ParameterSetName = "Debug")]
@@ -468,6 +477,7 @@ function Write-Log {
 
         [Parameter(ParameterSetName = "LevelParam")]
         [Parameter(ParameterSetName = "Info")]
+        [Parameter(ParameterSetName = "Success")]
         [Parameter(ParameterSetName = "Warning")]
         [Parameter(ParameterSetName = "Error")]
         [Parameter(ParameterSetName = "Debug")]
@@ -477,12 +487,16 @@ function Write-Log {
         [string]$Logger = "default",
 
         [Parameter(ParameterSetName = "LevelParam")]
-        [ValidateSet("INFO", "I", "WARNING", "W", "ERROR", "E", "DEBUG", "D", "VERBOSE", "V", "FATAL", "F")]
+        [ValidateSet("INFO", "I", "SUCCESS", "S", "WARNING", "W", "ERROR", "E", "DEBUG", "D", "VERBOSE", "V", "FATAL", "F")]
         [string]$Level = "INFO",
 
         [Parameter(Mandatory, ParameterSetName = "Info")]
         [Alias("I")]
         [switch]$Inf,
+
+        [Parameter(Mandatory, ParameterSetName = "Success")]
+        [Alias("S")]
+        [switch]$Scs,
 
         [Parameter(Mandatory, ParameterSetName = "Warning")]
         [Alias("W")]
@@ -507,6 +521,7 @@ function Write-Log {
 
     if ($($PSCmdlet.ParameterSetName) -ne "LevelParam") {
         if ($Inf) { $Level = [Levels]::INFO }
+        elseif ($Scs) { $Level = [Levels]::SUCCESS }
         elseif ($Wrn) { $Level = [Levels]::WARNING }
         elseif ($Err) { $Level = [Levels]::ERROR }
         elseif ($Dbg) { $Level = [Levels]::DEBUG }
@@ -516,6 +531,7 @@ function Write-Log {
     elseif ($Level -in @("I", "W", "E", "D", "V", "F")) {
         switch ($Level) {
             "I" { $Level = [Levels]::INFO }
+            "S" { $Level = [Levels]::SUCCESS }
             "W" { $Level = [Levels]::WARNING }
             "E" { $Level = [Levels]::ERROR }
             "D" { $Level = [Levels]::DEBUG }
