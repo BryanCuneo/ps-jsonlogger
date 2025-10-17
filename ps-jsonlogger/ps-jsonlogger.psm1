@@ -18,18 +18,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-enum Encodings {
-    ascii
-    bigendianunicode
-    oem
-    unicode
-    utf7
-    utf8
-    utf8BOM
-    utf8NoBOM
-    utf32
-}
-
 enum Levels {
     INFO
     WARNING
@@ -39,15 +27,19 @@ enum Levels {
     VERBOSE
 }
 
-$Ps5Encodings = @(
-    "ascii",
-    "bigendianunicode",
-    "oem",
-    "unicode",
-    "utf7",
-    "utf8",
-    "utf32"
-)
+if ($PSVersionTable.PSVersion.Major -ge 7) {
+    $valid_encodings = @("ansi", "ascii", "bigendianunicode", "bigendianutf32",
+        "oem", "unicode", "utf7", "utf8", "utf8BOM", "utf8NoBOM", "utf32")
+    # Before 7.4, "ansi" was not a valid encoding
+    if ($PSVersionTable.PSVersion.Minor -lt 4) {
+        $valid_encodings.Remove("ansi")
+    }
+}
+else {
+    $valid_encodings = @("Ascii", "BigEndianUnicode", "BigEndianUTF32",
+        "Byte", "Default", "Oem", "String", "Unicode", "Unknown", "UTF7",
+        "UTF8", "UTF32")
+}
 
 [hashtable]$script:_ShortLevels = @{
     "INFO"    = "INF"
@@ -67,14 +59,14 @@ class Logger {
     [bool]$Overwrite
     [bool]$WriteToHost
 
-    [string]$JsonLoggerVersion = "1.0.1"
+    [string]$JsonLoggerVersion = "1.1.0"
     [bool]$hasWarning = $false
     [bool]$hasError = $false
 
-    Logger([string]$path, [string]$programName, [Encodings]$encoding = [Encodings]::utf8BOM, [bool]$overwrite = $false, [bool]$writeToHost = $false) {
+    Logger([string]$path, [string]$programName, [string]$encoding, [bool]$overwrite = $false, [bool]$writeToHost = $false) {
         $this.Path = $path
         $this.ProgramName = $programName
-        $this.Encoding = [Encodings].GetEnumName($encoding)
+        $this.Encoding = $encoding
         $this.Overwrite = $overwrite
         $this.WriteToHost = $writeToHost
 
@@ -249,12 +241,16 @@ null or empty.
 .PARAMETER Encoding
 Text encoding used for the log file.
 
-PowerShell v7 suppors the following:
-ascii, bigendianunicode, oem, unicode, utf7, utf8, utf8BOM, utf8NoBOM, utf32
+PowerShell v7 encodings:
+"ascii", "bigendianunicode", "bigendianutf32", "oem", "unicode", "utf7",
+"utf8", "utf8BOM", "utf8NoBOM", "utf32"
+
+Additionally, 7.4+ supports "ansi" as an option.
 Default: utf8BOM
 
-PowerShell v5 supports this subset:
-ascii, bigendianunicode, oem, unicode, utf7, utf8, utf32
+PowerShell v5 encodings:
+"Ascii", "BigEndianUnicode", "BigEndianUTF32", "Byte", "Default", "Oem",
+"String", "Unicode", "Unknown", "UTF7", "UTF8", "UTF32"
 Default: utf8
 
 .PARAMETER LoggerName
@@ -316,7 +312,11 @@ function New-Logger {
         [ValidateNotNullOrEmpty()]
         [string]$ProgramName,
 
-        [Encodings]$Encoding,
+        [ValidateScript({
+                if ($_ -in $valid_encodings) { $true }
+                else { throw "'$_' is not a valid encoding. Please try again with a supported encoding: $($valid_encodings -join ", ")" }
+            })]
+        [string]$Encoding,
 
         [ValidateNotNullOrEmpty()]
         [string]$LoggerName = "default",
@@ -326,17 +326,11 @@ function New-Logger {
         [switch]$Force
     )
 
-    if ([string]::IsNullOrEmpty($Encoding)) {
-        if ($PSVersionTable.PSVersion.Major -ge 6) {
-            $Encoding = [Encodings]::utf8BOM
-        }
-        else {
-            $Encoding = [Encodings]::utf8
-        }
+    if (-not $Encoding -and $PSVersionTable.PSVersion.Major -ge 7) {
+        $Encoding = "utf8BOM"
     }
-
-    if ($PSVersionTable.PSVersion.Major -le 5 -and $Encoding -notin $Ps5Encodings) {
-        throw "Encoding '$Encoding' is not supported on PowerShell v$($PSVersionTable.PSVersion.Major). Please try again with a supported encoding:`n`t$($Ps5Encodings -join ", ")"
+    elseif (-not $Encoding) {
+        $Encoding = "utf8"
     }
 
     if ($script:_Loggers.Contains($LoggerName) -and -not $Force) {
@@ -346,6 +340,11 @@ function New-Logger {
     if ($PSCmdlet.ShouldProcess($Path, "Create logger '$LoggerName'")) {
         $script:_Loggers[$LoggerName] = [Logger]::new($Path, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
     }
+}
+
+Register-ArgumentCompleter -CommandName New-Logger -ParameterName Encoding -ScriptBlock {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+    $valid_encodings | Where-Object { $_ -like "$wordToComplete*" }
 }
 
 <#

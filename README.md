@@ -5,11 +5,11 @@ ps-jsonlogger is a small, dependency-free structured logging module for PowerShe
 
 - **No modifications to existing PS constructs** -  We have a lot of existing scripts that we want to integrate this logging with, not just utilize it for new development. To avoid steppng on toes in existing code, this library doesn't repurpose or modify the behaviour any existing cmdlets/functions (e.g. `Write-Warning`, `Write-Verbose`, etc.).
 
-- **Windows Powershell v5.1 backwards compatibility** - Of those existing scripts, some require PSv5 so backwards compatibility is a must. See the [notes on v7 vs. v5](#notes-on-powershell-core-7-vs-windows-powershell-51) for details.
+- **Windows Powershell v5 backwards compatibility** - Of those existing scripts, some require PSv5 so backwards compatibility is a must. See the [notes on v7 vs. v5](#notes-on-powershell-7-vs-windows-powershell-5) for details.
 
-- **File output and human-readable console output** - File output for production use and console output for development.
+- **Simple structure for log files** - To make it easy and fast to write parsers/visualizrs for these logs, a simple output format is prioritized.
 
-- **Simple output format** - To make it easy and fast to write parsers/visualizrs for these logs, a simple output format is prioritized.
+- **Human-readable console output** - In addition to log file file output, easy-to-read console output is also available.
 
 If these features match your needs, ps-jsonlogger is for you! You can get started by checking out the [usage instructions](#usage-instructions---table-of-contents) below.
 
@@ -34,7 +34,7 @@ If these features match your needs, ps-jsonlogger is for you! You can get starte
 
 - [Creating Multiple Loggers](#creating-multiple-loggers)
 
-- [Notes on PowerShell Core 7 vs Windows PowerShell 5.1](#notes-on-powershell-core-7-vs-windows-powershell-51)
+- [Notes on PowerShell Core 7 vs Windows PowerShell 5](#notes-on-powershell-7-vs-windows-powershell-5)
 
 - [Examples](#examples)
 
@@ -414,25 +414,18 @@ main
 
 [Back to the table of contents](#usage-instructions---table-of-contents)
 
-## Notes on PowerShell Core 7 vs Windows PowerShell 5.1
-While ps-jsonlogger is compatible with Windows PowerShell v5, it does have some inherent limitations.
+## Notes on PowerShell 7 vs. Windows PowerShell 5
+While ps-jsonlogger is compatible with Windows PowerShell v5, it does have some inherent differences.
 
 ### Encodings
-PowerShelll 7 supports a couple additional encoding options compared to v5.
+PowerShelll 7 and PowerShell 5 support different encoding options. `New-Logger -Encoding` will accept encodings appropriately depending on your current version. Below is a list of support encodings, for full details, see the [official documentation](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_character_encoding).
 
-v7: `ascii`, `bigendianunicode`, `oem`, `unicode`, `utf7`, `utf8`, `utf8BOM`, `utf8NoBOM`, `utf32`
-Default: `utf8BOM`
+**v7**: `ascii`, `bigendianunicode`, `bigendianutf32`, `oem`, `unicode`, `utf7`, `utf8`, `utf8BOM`, `utf8NoBOM`, `utf32`  
+Additionally, v7.4+ supports `ansi` as an option.  
+**Default**: `utf8BOM`
 
-v5: `ascii`, `bigendianunicode`, `oem`, `unicode`, `utf7`, `utf8`, `utf32`
-Default: `utf8`
-
-If you're using v5, you can still use the `Encoding` parameter to specify the encoding you want to use but you will get an error if you try to use an unsupported encoding.
-
-```
-PSv5 > New-Logger -Path "./encoding.log" -ProgramName "Encoding Test" -Encoding utf8BOM
-Encoding 'utf8BOM' is not supported on PowerShell v5. Please try again with a supported encoding:
-        ascii, bigendianunicode, oem, unicode, utf7, utf8, utf32
-```
+**v5**: `Ascii`, `BigEndianUnicode`, `BigEndianUTF32`, `Byte`, `Default`, `Oem`, `String`, `Unicode`, `Unknown`, `UTF7`, `UTF8`, `UTF32`  
+**Default**: `UTF8`
 
 ### Spercial Characters in JSON
 Powershell v5 does not convert all special characters in JSON strings the same way as PowerShell v7. This means that you may see some characters like `\u003c` in your log files in v5 instead of `<` in v7 or `\u0027` instead of `'`. PowerShell v5 will still import these files just fine and the initial log entry includes the `powerShellVersion` property that can be utilized in any parsers to ensure proper JSON deserialization.
