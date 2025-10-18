@@ -135,7 +135,7 @@ There are a couple ways to specify the log level, all are case-insensitive, and 
 * Per-level parameters (e.g. `-Err`, `-E`)
 * If no level is set, the default is `INFO`
 
-_Note: All per-level parameters are shortened versions of the full level names. This is because Error, Verbose, and Debug are all reserved words of one kind or another in PowerShell. The full list is `-Inf`, `-Wrn`, `-Err`, `-Dbg`, `-Vrb`, and `-Ftl`._
+_Note: All per-level parameters are shortened versions of the full level names. This is because Error, Verbose, and Debug are all reserved words of one kind or another in PowerShell. The full list is `-Inf`, `-Scs`, `-Wrn`, `-Err`, `-Dbg`, `-Vrb`, and `-Ftl`._
 
 #### log_levels_part_2.ps1
 ```PowerShell
@@ -271,7 +271,7 @@ Close-Log
 You can use one of the additional options or both at the same time:
 ```PowerShell
 # One context object
-Write-Log -Level $info -Message $message -Context $obj
+Write-Log -Level $level -Message $message -Context $obj
 
 # An array of multiple objects
 Write-Log -Level $level -Message $message -Context @($obj1, $obj2, $obj3)
