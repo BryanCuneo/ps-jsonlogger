@@ -3,6 +3,7 @@ Import-Module ps-jsonlogger
 New-Logger -Path "./log_levels_part_1.log" -ProgramName "Log Levels Example 1"
 
 Write-Log -Level "INFO" "Info level test"
+Write-Log -Level "SUCCESS" "Success level test"
 Write-Log -Level "WARNING" "Level test - warning"
 Write-Log -Level "ERROR" "Level test - error"
 Write-Log -Level "DEBUG" "Level test - debug"

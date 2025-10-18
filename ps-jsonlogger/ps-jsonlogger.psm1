@@ -18,20 +18,9 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-enum Encodings {
-    ascii
-    bigendianunicode
-    oem
-    unicode
-    utf7
-    utf8
-    utf8BOM
-    utf8NoBOM
-    utf32
-}
-
 enum Levels {
     INFO
+    SUCCESS
     WARNING
     ERROR
     FATAL
@@ -39,26 +28,21 @@ enum Levels {
     VERBOSE
 }
 
-$Ps5Encodings = @(
-    "ascii",
-    "bigendianunicode",
-    "oem",
-    "unicode",
-    "utf7",
-    "utf8",
-    "utf32"
-)
-
-[hashtable]$script:_ShortLevels = @{
-    "INFO"    = "INF"
-    "WARNING" = "WRN"
-    "ERROR"   = "ERR"
-    "FATAL"   = "FTL"
-    "DEBUG"   = "DBG"
-    "VERBOSE" = "VRB"
+if ($PSVersionTable.PSVersion.Major -ge 7) {
+    $_ValidEncodings = @("ansi", "ascii", "bigendianunicode", "bigendianutf32",
+        "oem", "unicode", "utf7", "utf8", "utf8BOM", "utf8NoBOM", "utf32")
+    # Before 7.4, "ansi" was not a valid encoding
+    if ($PSVersionTable.PSVersion.Minor -lt 4) {
+        $_ValidEncodings.Remove("ansi")
+    }
+}
+else {
+    $_ValidEncodings = @("Ascii", "BigEndianUnicode", "BigEndianUTF32",
+        "Byte", "Default", "Oem", "String", "Unicode", "Unknown", "UTF7",
+        "UTF8", "UTF32")
 }
 
-$script:_Loggers = [ordered]@{}
+$_Loggers = [ordered]@{}
 
 class Logger {
     [string]$Path
@@ -66,15 +50,24 @@ class Logger {
     [string]$Encoding
     [bool]$Overwrite
     [bool]$WriteToHost
-
-    [string]$JsonLoggerVersion = "1.0.1"
     [bool]$hasWarning = $false
     [bool]$hasError = $false
 
-    Logger([string]$path, [string]$programName, [Encodings]$encoding = [Encodings]::utf8BOM, [bool]$overwrite = $false, [bool]$writeToHost = $false) {
+    static [string]$JsonLoggerVersion = "1.1.0"
+    static [hashtable]$ShortLevels = @{
+        "INFO"    = "INF"
+        "SUCCESS" = "SCS"
+        "WARNING" = "WRN"
+        "ERROR"   = "ERR"
+        "FATAL"   = "FTL"
+        "DEBUG"   = "DBG"
+        "VERBOSE" = "VRB"
+    }
+
+    Logger([string]$path, [string]$programName, [string]$encoding, [bool]$overwrite = $false, [bool]$writeToHost = $false) {
         $this.Path = $path
         $this.ProgramName = $programName
-        $this.Encoding = [Encodings].GetEnumName($encoding)
+        $this.Encoding = $encoding
         $this.Overwrite = $overwrite
         $this.WriteToHost = $writeToHost
 
@@ -93,7 +86,7 @@ class Logger {
             level             = "START"
             programName       = $this.ProgramName
             PSVersion         = $global:PSVersionTable.PSVersion.ToString()
-            jsonLoggerVersion = $this.JsonLoggerVersion
+            jsonLoggerVersion = [Logger]::JsonLoggerVersion
         }
         try {
             $initialEntryJson = $initialEntry | ConvertTo-Json -Compress
@@ -153,6 +146,7 @@ class Logger {
 
         if ($this.WriteToHost) {
             switch ($level) {
+                "SUCCESS" { Write-Host $logEntry.ToString() -ForegroundColor Green }
                 "WARNING" { Write-Host $logEntry.ToString() -ForegroundColor Yellow }
                 "ERROR" { Write-Host $logEntry.ToString() -ForegroundColor Red }
                 "FATAL" { Write-Host $logEntry.ToString() -ForegroundColor Red }
@@ -224,7 +218,7 @@ class LogEntry {
     }
 
     [string] ToString() {
-        return "[$($script:_ShortLevels[$this.level])] $($this.message)"
+        return "[$([Logger]::ShortLevels[$this.level])] $($this.message)"
     }
 }
 
@@ -249,12 +243,16 @@ null or empty.
 .PARAMETER Encoding
 Text encoding used for the log file.
 
-PowerShell v7 suppors the following:
-ascii, bigendianunicode, oem, unicode, utf7, utf8, utf8BOM, utf8NoBOM, utf32
+PowerShell v7 encodings:
+"ascii", "bigendianunicode", "bigendianutf32", "oem", "unicode", "utf7",
+"utf8", "utf8BOM", "utf8NoBOM", "utf32"
+
+Additionally, 7.4+ supports "ansi" as an option.
 Default: utf8BOM
 
-PowerShell v5 supports this subset:
-ascii, bigendianunicode, oem, unicode, utf7, utf8, utf32
+PowerShell v5 encodings:
+"Ascii", "BigEndianUnicode", "BigEndianUTF32", "Byte", "Default", "Oem",
+"String", "Unicode", "Unknown", "UTF7", "UTF8", "UTF32"
 Default: utf8
 
 .PARAMETER LoggerName
@@ -316,7 +314,11 @@ function New-Logger {
         [ValidateNotNullOrEmpty()]
         [string]$ProgramName,
 
-        [Encodings]$Encoding,
+        [ValidateScript({
+                if ($_ -in $_ValidEncodings) { $true }
+                else { throw "'$_' is not a valid encoding. Please try again with a supported encoding: $($_ValidEncodings -join ", ")" }
+            })]
+        [string]$Encoding,
 
         [ValidateNotNullOrEmpty()]
         [string]$LoggerName = "default",
@@ -326,26 +328,25 @@ function New-Logger {
         [switch]$Force
     )
 
-    if ([string]::IsNullOrEmpty($Encoding)) {
-        if ($PSVersionTable.PSVersion.Major -ge 6) {
-            $Encoding = [Encodings]::utf8BOM
-        }
-        else {
-            $Encoding = [Encodings]::utf8
-        }
+    if (-not $Encoding -and $PSVersionTable.PSVersion.Major -ge 7) {
+        $Encoding = "utf8BOM"
+    }
+    elseif (-not $Encoding) {
+        $Encoding = "utf8"
     }
 
-    if ($PSVersionTable.PSVersion.Major -le 5 -and $Encoding -notin $Ps5Encodings) {
-        throw "Encoding '$Encoding' is not supported on PowerShell v$($PSVersionTable.PSVersion.Major). Please try again with a supported encoding:`n`t$($Ps5Encodings -join ", ")"
-    }
-
-    if ($script:_Loggers.Contains($LoggerName) -and -not $Force) {
+    if ($_Loggers.Contains($LoggerName) -and -not $Force) {
         throw "Unable to create logger '$LoggerName'. Use -LoggerName <name> to create a new logger with a different name or -Force to override this."
     }
 
     if ($PSCmdlet.ShouldProcess($Path, "Create logger '$LoggerName'")) {
-        $script:_Loggers[$LoggerName] = [Logger]::new($Path, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
+        $_Loggers[$LoggerName] = [Logger]::new($Path, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
     }
+}
+
+Register-ArgumentCompleter -CommandName New-Logger -ParameterName Encoding -ScriptBlock {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+    $_ValidEncodings | Where-Object { $_ -like "$wordToComplete*" }
 }
 
 <#
@@ -375,11 +376,14 @@ If you have more than one logger instance, this parameter allows you to specify
 which one to write to. If not specified, the default logger will be used.
 
 .PARAMETER Level
-The severity level of the log message. Valid options are INFO, I, WARNING, W,
-ERROR, E, DEBUG, D, VERBOSE, V, FATAL, and F. Default: INFO
+The severity level of the log message. Valid options are INFO, I, SUCCESS, S
+WARNING, W, ERROR, E, DEBUG, D, VERBOSE, V, FATAL, and F. Default: INFO
 
 .PARAMETER Inf
 A switch that can be used to specify the log level as INFO.
+
+.PARAMETER Scs
+A switch that can be used to specify the log level as SUCCESS.
 
 .PARAMETER Wrn
 A switch that can be used to specify the log level as WARNING.
@@ -440,6 +444,7 @@ function Write-Log {
     param(
         [Parameter(ParameterSetName = "LevelParam")]
         [Parameter(ParameterSetName = "Info")]
+        [Parameter(ParameterSetName = "Success")]
         [Parameter(ParameterSetName = "Warning")]
         [Parameter(ParameterSetName = "Error")]
         [Parameter(ParameterSetName = "Debug")]
@@ -451,6 +456,7 @@ function Write-Log {
 
         [Parameter(ParameterSetName = "LevelParam")]
         [Parameter(ParameterSetName = "Info")]
+        [Parameter(ParameterSetName = "Success")]
         [Parameter(ParameterSetName = "Warning")]
         [Parameter(ParameterSetName = "Error")]
         [Parameter(ParameterSetName = "Debug")]
@@ -460,6 +466,7 @@ function Write-Log {
 
         [Parameter(ParameterSetName = "LevelParam")]
         [Parameter(ParameterSetName = "Info")]
+        [Parameter(ParameterSetName = "Success")]
         [Parameter(ParameterSetName = "Warning")]
         [Parameter(ParameterSetName = "Error")]
         [Parameter(ParameterSetName = "Debug")]
@@ -469,6 +476,7 @@ function Write-Log {
 
         [Parameter(ParameterSetName = "LevelParam")]
         [Parameter(ParameterSetName = "Info")]
+        [Parameter(ParameterSetName = "Success")]
         [Parameter(ParameterSetName = "Warning")]
         [Parameter(ParameterSetName = "Error")]
         [Parameter(ParameterSetName = "Debug")]
@@ -478,12 +486,16 @@ function Write-Log {
         [string]$Logger = "default",
 
         [Parameter(ParameterSetName = "LevelParam")]
-        [ValidateSet("INFO", "I", "WARNING", "W", "ERROR", "E", "DEBUG", "D", "VERBOSE", "V", "FATAL", "F")]
+        [ValidateSet("INFO", "I", "SUCCESS", "S", "WARNING", "W", "ERROR", "E", "DEBUG", "D", "VERBOSE", "V", "FATAL", "F")]
         [string]$Level = "INFO",
 
         [Parameter(Mandatory, ParameterSetName = "Info")]
         [Alias("I")]
         [switch]$Inf,
+
+        [Parameter(Mandatory, ParameterSetName = "Success")]
+        [Alias("S")]
+        [switch]$Scs,
 
         [Parameter(Mandatory, ParameterSetName = "Warning")]
         [Alias("W")]
@@ -508,6 +520,7 @@ function Write-Log {
 
     if ($($PSCmdlet.ParameterSetName) -ne "LevelParam") {
         if ($Inf) { $Level = [Levels]::INFO }
+        elseif ($Scs) { $Level = [Levels]::SUCCESS }
         elseif ($Wrn) { $Level = [Levels]::WARNING }
         elseif ($Err) { $Level = [Levels]::ERROR }
         elseif ($Dbg) { $Level = [Levels]::DEBUG }
@@ -517,6 +530,7 @@ function Write-Log {
     elseif ($Level -in @("I", "W", "E", "D", "V", "F")) {
         switch ($Level) {
             "I" { $Level = [Levels]::INFO }
+            "S" { $Level = [Levels]::SUCCESS }
             "W" { $Level = [Levels]::WARNING }
             "E" { $Level = [Levels]::ERROR }
             "D" { $Level = [Levels]::DEBUG }
@@ -525,16 +539,16 @@ function Write-Log {
         }
     }
 
-    if ($script:_Loggers.Count -eq 0) {
+    if ($_Loggers.Count -eq 0) {
         throw "No existing loggers. Use 'New-Logger' to create one."
     }
 
-    if (-not $script:_Loggers.Contains($Logger)) {
-        Write-Warning "'$Logger' does not match any existing loggers ('$($script:_Loggers.Keys -join ", '")'). Falling back to '$($script:_Loggers.Keys[0])'."
-        $Logger = $script:_Loggers.Keys[0]
+    if (-not $_Loggers.Contains($Logger)) {
+        Write-Warning "'$Logger' does not match any existing loggers ('$($_Loggers.Keys -join ", '")'). Falling back to '$($_Loggers.Keys[0])'."
+        $Logger = $_Loggers.Keys[0]
     }
 
-    $script:_Loggers[$Logger].Log($Level, $Message, (Get-PSCallStack)[1].ToString(), $Context, $WithCallStack)
+    $_Loggers[$Logger].Log($Level, $Message, (Get-PSCallStack)[1].ToString(), $Context, $WithCallStack)
 }
 
 <#
@@ -592,7 +606,7 @@ function Close-Log {
         [switch]$All
     )
 
-    if ($script:_Loggers.Count -eq 0) {
+    if ($_Loggers.Count -eq 0) {
         return
     }
 
@@ -600,16 +614,16 @@ function Close-Log {
         Cleanup
     }
 
-    if (-not $script:_Loggers.Contains($Logger)) {
-        throw "'$Logger' does not match any existing loggers ('$($script:_Loggers.Keys -join ", '")')."
+    if (-not $_Loggers.Contains($Logger)) {
+        throw "'$Logger' does not match any existing loggers ('$($_Loggers.Keys -join ", '")')."
     }
 
-    $script:_Loggers[$Logger].Close($Message)
-    $script:_Loggers.Remove($Logger)
+    $_Loggers[$Logger].Close($Message)
+    $_Loggers.Remove($Logger)
 }
 
 function Cleanup {
-    $script:_Loggers.Clear()
+    $_Loggers.Clear()
 }
 
 # PS module lifecycle management kind of sucks. The PowerShell.Exiting and
