@@ -195,21 +195,8 @@ Write-Log -Level "DEBUG" "This line will never be logged because the preceeding 
 ```
 
 #### Console Output
-```
-PS > ./write_to_host.ps1
-[START][2025-10-17 14:21:56] Write to Host Example
-[INF] Level test - info
-[SCS] Level test - success
-[WRN] Level test - warning
-[ERR] Level test - error
-[DBG] Level test - debug
-[VRB] Level test - verbose
-[FTL] For terminating errors, FATAL-level logs will exit the script with 'exit 1'.
-[END][2025-10-17 14:21:56]
-PS >
-```
+<img width="663" height="136" alt="image" src="https://github.com/user-attachments/assets/0bbdb618-2d21-4449-8216-a0f10953a5a4" />
 
-_Note: In an actual PowerShell console, successes will have green text, warnings will have yellow text, and errors and fatal errors will have red text. Due to a limitation of GitHub`s markdown, those colors are not displayed above._
 
 [Back to the table of contents](#usage-instructions---table-of-contents)
 ## Overwriting Existing Log Files
