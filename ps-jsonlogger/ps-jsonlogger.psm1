@@ -29,30 +29,20 @@ enum Levels {
 }
 
 if ($PSVersionTable.PSVersion.Major -ge 7) {
-    $valid_encodings = @("ansi", "ascii", "bigendianunicode", "bigendianutf32",
+    $_ValidEncodings = @("ansi", "ascii", "bigendianunicode", "bigendianutf32",
         "oem", "unicode", "utf7", "utf8", "utf8BOM", "utf8NoBOM", "utf32")
     # Before 7.4, "ansi" was not a valid encoding
     if ($PSVersionTable.PSVersion.Minor -lt 4) {
-        $valid_encodings.Remove("ansi")
+        $_ValidEncodings.Remove("ansi")
     }
 }
 else {
-    $valid_encodings = @("Ascii", "BigEndianUnicode", "BigEndianUTF32",
+    $_ValidEncodings = @("Ascii", "BigEndianUnicode", "BigEndianUTF32",
         "Byte", "Default", "Oem", "String", "Unicode", "Unknown", "UTF7",
         "UTF8", "UTF32")
 }
 
-[hashtable]$script:_ShortLevels = @{
-    "INFO"    = "INF"
-    "SUCCESS" = "SCS"
-    "WARNING" = "WRN"
-    "ERROR"   = "ERR"
-    "FATAL"   = "FTL"
-    "DEBUG"   = "DBG"
-    "VERBOSE" = "VRB"
-}
-
-$script:_Loggers = [ordered]@{}
+$_Loggers = [ordered]@{}
 
 class Logger {
     [string]$Path
@@ -60,10 +50,19 @@ class Logger {
     [string]$Encoding
     [bool]$Overwrite
     [bool]$WriteToHost
-
-    [string]$JsonLoggerVersion = "1.1.0"
     [bool]$hasWarning = $false
     [bool]$hasError = $false
+
+    static [string]$JsonLoggerVersion = "1.1.0"
+    static [hashtable]$ShortLevels = @{
+        "INFO"    = "INF"
+        "SUCCESS" = "SCS"
+        "WARNING" = "WRN"
+        "ERROR"   = "ERR"
+        "FATAL"   = "FTL"
+        "DEBUG"   = "DBG"
+        "VERBOSE" = "VRB"
+    }
 
     Logger([string]$path, [string]$programName, [string]$encoding, [bool]$overwrite = $false, [bool]$writeToHost = $false) {
         $this.Path = $path
@@ -87,7 +86,7 @@ class Logger {
             level             = "START"
             programName       = $this.ProgramName
             PSVersion         = $global:PSVersionTable.PSVersion.ToString()
-            jsonLoggerVersion = $this.JsonLoggerVersion
+            jsonLoggerVersion = [Logger]::JsonLoggerVersion
         }
         try {
             $initialEntryJson = $initialEntry | ConvertTo-Json -Compress
@@ -219,7 +218,7 @@ class LogEntry {
     }
 
     [string] ToString() {
-        return "[$($script:_ShortLevels[$this.level])] $($this.message)"
+        return "[$([Logger]::ShortLevels[$this.level])] $($this.message)"
     }
 }
 
@@ -316,8 +315,8 @@ function New-Logger {
         [string]$ProgramName,
 
         [ValidateScript({
-                if ($_ -in $valid_encodings) { $true }
-                else { throw "'$_' is not a valid encoding. Please try again with a supported encoding: $($valid_encodings -join ", ")" }
+                if ($_ -in $_ValidEncodings) { $true }
+                else { throw "'$_' is not a valid encoding. Please try again with a supported encoding: $($_ValidEncodings -join ", ")" }
             })]
         [string]$Encoding,
 
@@ -336,18 +335,18 @@ function New-Logger {
         $Encoding = "utf8"
     }
 
-    if ($script:_Loggers.Contains($LoggerName) -and -not $Force) {
+    if ($_Loggers.Contains($LoggerName) -and -not $Force) {
         throw "Unable to create logger '$LoggerName'. Use -LoggerName <name> to create a new logger with a different name or -Force to override this."
     }
 
     if ($PSCmdlet.ShouldProcess($Path, "Create logger '$LoggerName'")) {
-        $script:_Loggers[$LoggerName] = [Logger]::new($Path, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
+        $_Loggers[$LoggerName] = [Logger]::new($Path, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
     }
 }
 
 Register-ArgumentCompleter -CommandName New-Logger -ParameterName Encoding -ScriptBlock {
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
-    $valid_encodings | Where-Object { $_ -like "$wordToComplete*" }
+    $_ValidEncodings | Where-Object { $_ -like "$wordToComplete*" }
 }
 
 <#
@@ -540,16 +539,16 @@ function Write-Log {
         }
     }
 
-    if ($script:_Loggers.Count -eq 0) {
+    if ($_Loggers.Count -eq 0) {
         throw "No existing loggers. Use 'New-Logger' to create one."
     }
 
-    if (-not $script:_Loggers.Contains($Logger)) {
-        Write-Warning "'$Logger' does not match any existing loggers ('$($script:_Loggers.Keys -join ", '")'). Falling back to '$($script:_Loggers.Keys[0])'."
-        $Logger = $script:_Loggers.Keys[0]
+    if (-not $_Loggers.Contains($Logger)) {
+        Write-Warning "'$Logger' does not match any existing loggers ('$($_Loggers.Keys -join ", '")'). Falling back to '$($_Loggers.Keys[0])'."
+        $Logger = $_Loggers.Keys[0]
     }
 
-    $script:_Loggers[$Logger].Log($Level, $Message, (Get-PSCallStack)[1].ToString(), $Context, $WithCallStack)
+    $_Loggers[$Logger].Log($Level, $Message, (Get-PSCallStack)[1].ToString(), $Context, $WithCallStack)
 }
 
 <#
@@ -607,7 +606,7 @@ function Close-Log {
         [switch]$All
     )
 
-    if ($script:_Loggers.Count -eq 0) {
+    if ($_Loggers.Count -eq 0) {
         return
     }
 
@@ -615,16 +614,16 @@ function Close-Log {
         Cleanup
     }
 
-    if (-not $script:_Loggers.Contains($Logger)) {
-        throw "'$Logger' does not match any existing loggers ('$($script:_Loggers.Keys -join ", '")')."
+    if (-not $_Loggers.Contains($Logger)) {
+        throw "'$Logger' does not match any existing loggers ('$($_Loggers.Keys -join ", '")')."
     }
 
-    $script:_Loggers[$Logger].Close($Message)
-    $script:_Loggers.Remove($Logger)
+    $_Loggers[$Logger].Close($Message)
+    $_Loggers.Remove($Logger)
 }
 
 function Cleanup {
-    $script:_Loggers.Clear()
+    $_Loggers.Clear()
 }
 
 # PS module lifecycle management kind of sucks. The PowerShell.Exiting and
