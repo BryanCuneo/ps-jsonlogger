@@ -195,7 +195,8 @@ Write-Log -Level "DEBUG" "This line will never be logged because the preceeding 
 ```
 
 #### Console Output
-<img width="663" height="136" alt="image" src="https://github.com/user-attachments/assets/0bbdb618-2d21-4449-8216-a0f10953a5a4" />
+<img width="1070" height="237" alt="image" src="https://github.com/user-attachments/assets/bec83455-38ec-469f-8870-6835eeea75b0" />
+
 
 
 [Back to the table of contents](#usage-instructions---table-of-contents)
