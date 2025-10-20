@@ -41,7 +41,13 @@ If these features match your needs, ps-jsonlogger is for you! You can get starte
 - [Next Steps - Parsing and Visualizing Your Logs](#next-steps---parsing-and-visualizing-your-logs)
 
 ## Installation
-ps-jsonlogger will be avialable from the PowerShell Gallery as soon as the [PSGallery login issues](https://github.com/PowerShell/PowerShellGallery/issues/330) are resolved. In the meantime, you can download the latest `.nupkg` file directly from the [releases page](https://github.com/BryanCuneo/ps-jsonlogger/releases). To install a direct-download NUPKG file, do so with a local PSRepository:
+It is recommend to ps-jsonlogger from [PowerShell Gallery](https://www.powershellgallery.com/packages/ps-jsonlogger/) with the following command:
+
+```
+Install-Module -Name ps-jsonlogger
+```
+
+Alternatively, you may download the latest `.nupkg` file directly from the [releases page](https://github.com/BryanCuneo/ps-jsonlogger/releases) and install it using a local repository:
 
 ```PowerShell
 PS > $myRepoParams = @{
