@@ -622,6 +622,53 @@ function Close-Log {
     $_Loggers.Remove($Logger)
 }
 
+function Import-Log {
+    param(
+        [Parameter(Mandatory, ValueFromPipeline = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path,
+
+        [ValidateScript({
+                if ($_ -in $_ValidEncodings) { $true }
+                else { throw "'$_' is not a valid encoding. Please try again with a supported encoding: $($_ValidEncodings -join ", ")" }
+            })]
+        [string]$Encoding
+    )
+
+    if (-not $Encoding -and $PSVersionTable.PSVersion.Major -ge 7) {
+        $Encoding = "utf8BOM"
+    }
+    elseif (-not $Encoding) {
+        $Encoding = "utf8"
+    }
+
+    $content = Get-Content -Path $Path -Encoding $Encoding -ErrorAction Stop
+    $end_time = ($content[-1] | ConvertFrom-Json).timestamp
+
+    $log = $content[0] `
+    | ConvertFrom-Json `
+    | Select-Object `
+    @{Name = "startTime"; Expression = { $_.timestamp } },
+    @{Name = "endTime"; Expression = { $end_time } },
+    @{Name = "duration"; Expression = { (New-TimeSpan -Start $_.timestamp -End $end_time).ToString("hh\:mm\:ss\.fff") } },
+    programName, PSVersion, jsonLoggerVersion,
+    @{Name = "hasWarning"; Expression = { $_.hasWarning -eq $true } },
+    @{Name = "hasError"; Expression = { $_.hasError -eq $true } },
+    @{Name = "hasFatal"; Expression = { $_.hasFatal -eq $true } }
+
+    $entries = @()
+    $content | Select-Object -Skip 1 -First $($content.Count - 2) | ForEach-Object { $entries += $_ | ConvertFrom-Json }
+    $log | Add-Member -MemberType NoteProperty -Name "entries" -Value $entries
+
+
+    return $log
+}
+
+Register-ArgumentCompleter -CommandName Import-JsonLog -ParameterName Encoding -ScriptBlock {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+    $_ValidEncodings | Where-Object { $_ -like "$wordToComplete*" }
+}
+
 function Cleanup {
     $_Loggers.Clear()
 }
@@ -639,4 +686,4 @@ $OnRemoveScript = {
 }
 $ExecutionContext.SessionState.Module.OnRemove += $OnRemoveScript
 
-Export-ModuleMember -Function New-Logger, Write-Log, Close-Log
+Export-ModuleMember -Function New-Logger, Write-Log, Close-Log, Import-Log

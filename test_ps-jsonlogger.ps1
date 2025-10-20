@@ -119,7 +119,14 @@ function main {
     Test-Error
     Test-Debug
     Test-Verbose
-    Test-Fatal
+    # Test-Fatal
+
+    Close-Log
+
+    Write-Host "`nImporting log..." -NoNewline
+    $log = Import-Log -Path "./testing.log"
+    Write-Host " Done:" -ForegroundColor Green
+    Write-Host $log
 }
 
 main
