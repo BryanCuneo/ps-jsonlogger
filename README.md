@@ -38,6 +38,8 @@ If these features match your needs, ps-jsonlogger is for you! You can get starte
 
 - [Examples](#examples)
 
+- [Next Steps - Parsing and Visualizing Your Logs](#next-steps---parsing-and-visualizing-your-logs)
+
 ## Installation
 ps-jsonlogger will be avialable from the PowerShell Gallery as soon as the [PSGallery login issues](https://github.com/PowerShell/PowerShellGallery/issues/330) are resolved. In the meantime, you can download the latest `.nupkg` file directly from the [releases page](https://github.com/BryanCuneo/ps-jsonlogger/releases). To install a direct-download NUPKG file, do so with a local PSRepository:
 
@@ -429,5 +431,10 @@ Powershell v5 does not convert all special characters in JSON strings the same w
 
 ## Examples
 The [examples folder](examples) contains all the scripts used in this README.
+
+[Back to the table of contents](#usage-instructions---table-of-contents)
+
+## Next Steps - Parsing and Visualizing Your Logs
+Logs are no good if you can't read them! See [parsing-and-visualization](./parsing-and-visualization) for more information.
 
 [Back to the table of contents](#usage-instructions---table-of-contents)
