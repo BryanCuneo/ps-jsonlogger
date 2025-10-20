@@ -18,7 +18,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-Import-Module "./ps-jsonlogger/ps-jsonlogger.psm1" -Force
+Import-Module "../ps-jsonlogger/ps-jsonlogger.psm1" -Force
 
 class Ctx {
     [string]$Name
@@ -125,16 +125,16 @@ function main {
 
     Write-Host "`nImporting log..." -NoNewline
     $log = Import-Log -Path "./out/testing.log"
-    Write-Host " Done:" -ForegroundColor Green
+    Write-Host " Done" -ForegroundColor Green
     Write-Host $log
 
     Write-Host "`nConverting log"
     Write-Host " * CSV..." -NoNewline
     Convert-Log -Path "./out/testing.log" -Destination "./out/testing.csv" -ConvertTo "CSV" -Overwrite
-    Write-Host " Done:" -ForegroundColor Green
+    Write-Host " Done" -ForegroundColor Green
     Write-Host " * CLIXML..." -NoNewline
-    Convert-Log -Path "./out/testing.log" -Destination "./out/testing.clixml" -ConvertTo "CLIXML" -Overwrite -Encoding "utf8"   
-    Write-Host " Done:" -ForegroundColor Green
+    Convert-Log -Path "./out/testing.log" -Destination "./out/testing.clixml" -ConvertTo "CLIXML" -Overwrite -Encoding "utf8"
+    Write-Host " Done" -ForegroundColor Green
 
 }
 
