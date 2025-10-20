@@ -6,7 +6,7 @@ This section is a work in progress. For now it provides documentation for the `I
 The `ps-jsonlogger` module provides both the `Import-Log` and `Convert-Log` cmdlets, which can be used to parse or convert a ps-jsonlogger log file.
 
 ### Import-Log
-`Import-Log` parses a ps-jsonlogger log file and returns a PowerShell object containing the log entries and the following metadata:
+`Import-Log` parses a log file and returns a PowerShell object containing the log entries and the following metadata:
 - startTime
 - endTime
 - duration
