@@ -1,4 +1,7 @@
 /ignore/
+/testing/out/
 
 *.log
 *.psd1
+
+!/parsing-and-visualization/sample.log

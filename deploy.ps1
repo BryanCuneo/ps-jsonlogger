@@ -44,7 +44,7 @@ $parameters = @{
     ModuleVersion     = $Version
     Copyright         = $copyright
     Description       = $description
-    FunctionsToExport = "New-Logger", "Write-Log", "Close-Log"
+    FunctionsToExport = "New-Logger", "Write-Log", "Close-Log", "Import-Log", "Convert-Log"
     LicenseUri        = "https://opensource.org/license/MIT"
     ProjectUri        = "https://github.com/BryanCuneo/ps-jsonlogger"
 }
