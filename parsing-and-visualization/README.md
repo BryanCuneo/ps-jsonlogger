@@ -42,3 +42,5 @@ _Note: The script uses symbols from [Nerd Fonts](https://www.nerdfonts.com/). Yo
 
 ### Convert-Log
 `Convert-Log` imports a ps-jsonlogger log file (using the [`Import-Log`](#import-log) cmdlet) and exports it to a new file in the chosen format. This is a WIP and currently supports just `.csv` and `.clixml` formats as output.
+
+[Back to the main page.](../)
