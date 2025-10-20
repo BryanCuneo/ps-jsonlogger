@@ -124,7 +124,7 @@ function main {
     Close-Log
 
     Write-Host "`nImporting log..." -NoNewline
-    $log = Import-Log -Path "./testing.log"
+    $log = Import-Log -Path "./out/testing.log"
     Write-Host " Done:" -ForegroundColor Green
     Write-Host $log
 

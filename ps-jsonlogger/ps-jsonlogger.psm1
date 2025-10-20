@@ -273,24 +273,23 @@ same name as an existing logger. Default: off
 None.
 
 .OUTPUTS
-None.
+A new Logger instance.
 
 .EXAMPLE
-New-Logger -Path "C:\logs\app.log" -ProgramName "MyApplication"
+# Creates a new logger that writes to "C:\logs\app.log" for
+# "My Application" with default parameters.
+New-Logger -Path "C:\logs\app.log" -ProgramName "My Application"
 
-Creates a new logger that writes to "C:\logs\app.log" for
-"MyApplication" with default parameters.
 
 .EXAMPLE
+# Creates a logger named "MyLogger" that overwrites any existing log
+# file at "C:\logs\app.log".
 New-Logger `
         -Path "C:\logs\app.log" `
-        -ProgramName "MyApplication" `
+        -ProgramName "My Application" `
         -LoggerName "MyLogger" `
         -Overwrite `
         -Force
-
-Creates a logger named "MyLogger" that overwrites any existing log
-file at "C:\logs\app.log".
 
 .LINK
 Write-Log
@@ -408,31 +407,28 @@ A switch that can be used to specify the log level as FATAL.
 The Message parameter accepts pipeline input.
 
 .OUTPUTS
-None.
+None (writes output to disk).
 
 .EXAMPLE
+# Logs an message with the default level of INFO.
 Write-Log "Hello, World!"
 
-Logs an message with the default level of INFO.
-
 .EXAMPLE
+# Logs a warning message.
 Write-Log -Level "W" -Message "This is a warning message."
 
-Logs a warning message.
+.EXAMPLE
+# Logs an error message along with additional context information.
+$context = [Ordered]@{
+    Name = "John Doe"
+    Age  = 42
+}
+"This is an error message with context." | Write-Log -Err -Context $context
+
 
 .EXAMPLE
-    $context = [Ordered]@{
-        Name = "John Doe"
-        Age  = 42
-    }
-    "This is an error message with context." | Write-Log -Err -Context $context
-
-Logs an error message along with additional context information.
-
-.EXAMPLE
+# Logs a FATAL error that will close the log cause the script to exit.
 Write-Log -F "An unrecoverable error has occurred. Exiting."
-
-Logs a FATAL error that will close the log cause the script to exit.
 
 .LINK
 New-Logger
@@ -586,12 +582,11 @@ other parameters.
 A string message.
 
 .OUTPUTS
-None.
+None (writes output to disk).
 
 .EXAMPLE
+# Closes the default logger with the message, "All Done!".
 Close-Log "All Done!"
-
-Closes the default logger with thes message, "All Done!".
 
 .LINK
 New-Logger
@@ -682,15 +677,15 @@ System.Management.Automation.PSCustomObject
 
 .EXAMPLE
 # Basic import
-Import-Log -Path 'C:\logs\session.log'
+$log = Import-Log -Path "C:\logs\session.log"
 
 .EXAMPLE
 # From pipeline
-'C:\logs\session.log' | Import-Log
+$log = "C:\logs\session.log" | Import-Log
 
 .EXAMPLE
 # Specify encoding
-Import-Log -Path '.\session.log' -Encoding utf8
+$log = Import-Log -Path "C:\logs\session.log" -Encoding utf8
 
 .LINK
 New-Logger
@@ -800,6 +795,14 @@ The Path parameter accepts pipeline input.
 .OUTPUTS
 None (writes output to disk).
 
+.EXAMPLE
+# Converts a log file to CSV.
+Convert-Log -Path "C:\logs\session.log" -Destination "C:\logs\session.csv" -ConvertTo "CSV"
+
+.EXAMPLE
+# Converts a log file to CLIXML.
+"C:\logs\session.log" | Convert-Log -Destination "C:\logs\session.clixml" -ConvertTo "CLIXML"
+
 .LINK
 New-Logger
 
@@ -817,9 +820,7 @@ Import-Clixml
 
 .LINK
 https://github.com/BryanCuneo/ps-jsonlogger
-
 #>
-
 function Convert-Log {
     param(
         [Parameter(Mandatory, ValueFromPipeline = $true)]
