@@ -112,7 +112,7 @@ function Test-Fatal {
 }
 
 function main {
-    New-Logger -Path "./testing.log" -ProgramName "Test Script for ps-jsonlogger" -Overwrite -WriteToHost
+    New-Logger -Path "./out/testing.log" -ProgramName "Test Script for ps-jsonlogger" -Overwrite -WriteToHost
     Test-Info
     Test-Success
     Test-Warning
@@ -127,6 +127,15 @@ function main {
     $log = Import-Log -Path "./testing.log"
     Write-Host " Done:" -ForegroundColor Green
     Write-Host $log
+
+    Write-Host "`nConverting log"
+    Write-Host " * CSV..." -NoNewline
+    Convert-Log -Path "./out/testing.log" -Destination "./out/testing.csv" -ConvertTo "CSV" -Overwrite
+    Write-Host " Done:" -ForegroundColor Green
+    Write-Host " * CLIXML..." -NoNewline
+    Convert-Log -Path "./out/testing.log" -Destination "./out/testing.clixml" -ConvertTo "CLIXML" -Overwrite -Encoding "utf8"   
+    Write-Host " Done:" -ForegroundColor Green
+
 }
 
 main

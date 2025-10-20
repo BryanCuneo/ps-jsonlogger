@@ -1,4 +1,5 @@
 /ignore/
+/testing/out/
 
 *.log
 *.psd1

@@ -53,7 +53,7 @@ class Logger {
     [bool]$hasWarning = $false
     [bool]$hasError = $false
 
-    static [string]$JsonLoggerVersion = "1.1.0"
+    static [string]$JsonLoggerVersion = "1.2.0"
     static [hashtable]$ShortLevels = @{
         "INFO"    = "INF"
         "SUCCESS" = "SCS"
@@ -233,12 +233,10 @@ the -LoggerName parameter, and you can use any of PowerShell's supported
 encoding options with the -Encoding parameter (default: utf8).
 
 .PARAMETER Path
-The file path where the log file will be written. It is mandatory and cannot be
-null or empty.
+The file path where the log file will be written. Required and cannot be null or empty.
 
 .PARAMETER ProgramName
-Friendly name for the program that is logging. It is mandatory and cannot be
-null or empty.
+Friendly name for the program that is logging. Required and cannot be null or empty.
 
 .PARAMETER Encoding
 Text encoding used for the log file.
@@ -301,6 +299,12 @@ Write-Log
 Close-Log
 
 .LINK
+Import-Log
+
+.LINK
+Convert-Log
+
+.LINK
 https://github.com/BryanCuneo/ps-jsonlogger
 #>
 function New-Logger {
@@ -359,9 +363,9 @@ levels: INFO, WARNING, ERROR, DEBUG, VERBOSE, and FATAL. You can also include
 contextual information and/or call stack details.
 
 .PARAMETER Message
-The log message to be recorded. This parameter is mandatory and cannot be null
-or empty. It can be piped to the function, given as as positional parameter, or
-given explicitly as -Message.
+The log message to be recorded. Required and cannot be null or empty. It can be
+piped to the function, given as as positional parameter, or given explicitly as
+-Message.
 
 .PARAMETER Context
 An optional array of PowerShell objects to provide additional contextual info
@@ -401,7 +405,7 @@ A switch that can be used to specify the log level as VERBOSE.
 A switch that can be used to specify the log level as FATAL.
 
 .INPUTS
-A string message.
+The Message parameter accepts pipeline input.
 
 .OUTPUTS
 None.
@@ -435,6 +439,12 @@ New-Logger
 
 .LINK
 Close-Log
+
+.LINK
+Import-Log
+
+.LINK
+Convert-Log
 
 .LINK
 https://github.com/BryanCuneo/ps-jsonlogger
@@ -590,6 +600,12 @@ New-Logger
 Write-Log
 
 .LINK
+Convert-Log
+
+.LINK
+Import-Log
+
+.LINK
 https://github.com/BryanCuneo/ps-jsonlogger
 #>
 function Close-Log {
@@ -622,6 +638,75 @@ function Close-Log {
     $_Loggers.Remove($Logger)
 }
 
+<#
+.SYNOPSIS
+Imports a log file created by ps-jsonlogger.
+
+.DESCRIPTION
+Imports a log file created by ps-jsonlogger and returns an object containing
+the log entries and the following metadata:
+- startTime
+- endTime
+- duration
+- programName
+- PSVersion
+- jsonLoggerVersion
+- hasWarning
+- hasError
+- hasFatal
+
+.PARAMETER Path
+The path to the log file. Required and cannot be null or empty.
+
+.PARAMETER Encoding
+Text encoding used for the log file.
+
+PowerShell v7 encodings:
+"ascii", "bigendianunicode", "bigendianutf32", "oem", "unicode", "utf7",
+"utf8", "utf8BOM", "utf8NoBOM", "utf32"
+
+Additionally, 7.4+ supports "ansi" as an option.
+Default: utf8BOM
+
+PowerShell v5 encodings:
+"Ascii", "BigEndianUnicode", "BigEndianUTF32", "Byte", "Default", "Oem",
+"String", "Unicode", "Unknown", "UTF7", "UTF8", "UTF32"
+Default: utf8
+
+.INPUTS
+The Path parameter accepts pipeline input.
+
+.OUTPUTS
+System.Management.Automation.PSCustomObject
+- Contains the properties described in DESCRIPTION.
+
+.EXAMPLE
+# Basic import
+Import-Log -Path 'C:\logs\session.log'
+
+.EXAMPLE
+# From pipeline
+'C:\logs\session.log' | Import-Log
+
+.EXAMPLE
+# Specify encoding
+Import-Log -Path '.\session.log' -Encoding utf8
+
+.LINK
+New-Logger
+
+.LINK
+Write-Log
+
+.LINK
+Close-Log
+
+.LINK
+Convert-Log
+
+.LINK
+https://github.com/BryanCuneo/ps-jsonlogger
+#>
 function Import-Log {
     param(
         [Parameter(Mandatory, ValueFromPipeline = $true)]
@@ -664,7 +749,123 @@ function Import-Log {
     return $log
 }
 
-Register-ArgumentCompleter -CommandName Import-JsonLog -ParameterName Encoding -ScriptBlock {
+Register-ArgumentCompleter -CommandName Import-Log -ParameterName Encoding -ScriptBlock {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+    $_ValidEncodings | Where-Object { $_ -like "$wordToComplete*" }
+}
+
+<#
+.SYNOPSIS
+Converts a ps-jsonlogger log file. Currently supports CSV and CLIXML.
+
+.DESCRIPTION
+Parses a ps-jsonlogger using Import-Log and writes it to a new file in the
+chosen format.
+
+Supported conversions:
+- CSV
+- CLIXML
+
+.PARAMETER Path
+The path to the log file. Required and cannot be null or empty.
+
+.PARAMETER Destination
+Path to the output file. Required and cannot be null or empty.
+
+.PARAMETER Encoding
+Text encoding used for the log file and the output file.
+
+PowerShell v7 encodings:
+"ascii", "bigendianunicode", "bigendianutf32", "oem", "unicode", "utf7",
+"utf8", "utf8BOM", "utf8NoBOM", "utf32"
+
+Additionally, 7.4+ supports "ansi" as an option.
+Default: utf8BOM
+
+PowerShell v5 encodings:
+"Ascii", "BigEndianUnicode", "BigEndianUTF32", "Byte", "Default", "Oem",
+"String", "Unicode", "Unknown", "UTF7", "UTF8", "UTF32"
+Default: utf8
+
+.PARAMETER ConvertTo
+Specifies the target format. Acceptable values: "CSV", "CLIXML".
+Alias: To
+
+.PARAMETER Overwrite
+Switch. If present, existing Destination file will be overwritten.
+
+.INPUTS
+The Path parameter accepts pipeline input.
+
+.OUTPUTS
+None (writes output to disk).
+
+.LINK
+New-Logger
+
+.LINK
+Write-Log
+
+.LINK
+Close-Log
+
+.LINK
+Import-Log
+
+.LINK
+Import-Clixml
+
+.LINK
+https://github.com/BryanCuneo/ps-jsonlogger
+
+#>
+
+function Convert-Log {
+    param(
+        [Parameter(Mandatory, ValueFromPipeline = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Path,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Destination,
+
+        [ValidateScript({
+                if ($_ -in $_ValidEncodings) { $true }
+                else { throw "'$_' is not a valid encoding. Please try again with a supported encoding: $($_ValidEncodings -join ", ")" }
+            })]
+        [string]$Encoding,
+
+        [Parameter(Mandatory)]
+        [Alias("To")]
+        [ValidateSet("CSV", "CLIXML")]
+        [string]$ConvertTo,
+
+        [switch]$Overwrite
+    )
+
+    if (-not $Encoding -and $PSVersionTable.PSVersion.Major -ge 7) {
+        $Encoding = "utf8BOM"
+    }
+    elseif (-not $Encoding) {
+        $Encoding = "utf8"
+    }
+
+    $log = Import-Log -Path $Path -Encoding $Encoding
+
+    switch ($ConvertTo) {
+        "csv" {
+            $log.entries `
+            | Select-Object "timestamp", "level", "message", "calledFrom", "context", "callStack" `
+            | Export-Csv -Path $Destination -NoTypeInformation -Encoding $Encoding -Force:$Overwrite
+        }
+        "clixml" {
+            $log | Export-Clixml -Path $Destination -Force:$Overwrite
+        }
+    }
+}
+
+Register-ArgumentCompleter -CommandName Import-Log -ParameterName Encoding -ScriptBlock {
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
     $_ValidEncodings | Where-Object { $_ -like "$wordToComplete*" }
 }
@@ -686,4 +887,4 @@ $OnRemoveScript = {
 }
 $ExecutionContext.SessionState.Module.OnRemove += $OnRemoveScript
 
-Export-ModuleMember -Function New-Logger, Write-Log, Close-Log, Import-Log
+Export-ModuleMember -Function New-Logger, Write-Log, Close-Log, Import-Log, Convert-Log
