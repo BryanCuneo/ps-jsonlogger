@@ -60,7 +60,7 @@ class Logger {
     [bool]$hasWarning = $false
     [bool]$hasError = $false
 
-    static [string]$JsonLoggerVersion = "1.2.0"
+    static [string]$JsonLoggerVersion = "1.3.0"
     static [hashtable]$ShortLevels = @{
         [Levels]::INFO    = "INF"
         [Levels]::SUCCESS = "SCS"
@@ -157,7 +157,7 @@ class Logger {
         Add-Content -Path $this.Path -Value $logEntryJson -Encoding $this.Encoding -ErrorAction Stop
         
         if ($this.WriteToHost) {
-            $console_message = $logEntry.ToString()
+            $console_message = "[$([Logger]::ShortLevels[$level])] $message"
             $color = "White"
             
             switch ($level) {
@@ -241,10 +241,6 @@ class LogEntry {
         if ($this.level -eq [Levels]::VERBOSE -or $this.level -eq [Levels]::FATAL -or $includeCallStack) {
             $this | Add-Member -MemberType NoteProperty -Name "callStack" -Value ([string](Get-PSCallStack))
         }
-    }
-
-    [string] ToString() {
-        return "[$([Logger]::ShortLevels[$this.level])] $($this.message)"
     }
 }
 

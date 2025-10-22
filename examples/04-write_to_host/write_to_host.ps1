@@ -1,6 +1,6 @@
 Import-Module ps-jsonlogger
 
-New-Logger -Path "./write_to_host.log" -ProgramName "Write to Host Example" -WriteToHost
+New-Logger -Path "./write_to_host.log" -ProgramName "Write to Host Example" -WriteToHost Simple
 
 Write-Log -Level "INFO" "Level test - info"
 Write-Log -Level "SUCCESS" "Level test - success"
