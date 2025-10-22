@@ -112,7 +112,7 @@ function Test-Fatal {
 }
 
 function main {
-    New-Logger -Path "./out/testing.log" -ProgramName "Test Script for ps-jsonlogger" -Overwrite -WriteToHost
+    New-Logger -Path "./out/testing.log" -ProgramName "Test Script for ps-jsonlogger" -Overwrite -WriteToHost TimeSpan
     Test-Info
     Test-Success
     Test-Warning
@@ -135,7 +135,6 @@ function main {
     Write-Host " * CLIXML..." -NoNewline
     Convert-Log -Path "./out/testing.log" -Destination "./out/testing.clixml" -ConvertTo "CLIXML" -Overwrite -Encoding "utf8"
     Write-Host " Done" -ForegroundColor Green
-
 }
 
 main
