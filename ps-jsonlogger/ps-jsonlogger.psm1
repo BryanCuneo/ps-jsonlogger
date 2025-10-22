@@ -101,7 +101,7 @@ class Logger {
             Add-Content -Path $this.Path -Value $initialEntryJson -Encoding $this.Encoding -ErrorAction Stop
 
             if ($this.WriteToHost) {
-                Write-Host "[$($initialEntry.level)][$(Get-Date $initialEntry.timestamp -f "yyyy-MM-dd HH:mm:ss")] $($this.ProgramName)"
+                Write-Host "[$($initialEntry.level) $(Get-Date $initialEntry.timestamp -f "yyyy-MM-dd HH:mm:ss")] $($this.ProgramName)"
             }
         }
         catch {
@@ -211,7 +211,7 @@ class Logger {
         }
 
         if ($this.WriteToHost) {
-            $friendlyString = "[$($finalEntry.level)][$(Get-Date $finalEntry.timestamp -f "yyyy-MM-dd HH:mm:ss")]"
+            $friendlyString = "[$($finalEntry.level) $(Get-Date $finalEntry.timestamp -f "yyyy-MM-dd HH:mm:ss")]"
             if (-not [string]::IsNullOrEmpty($message)) {
                 $friendlyString += " $message"
             }
@@ -374,7 +374,6 @@ function New-Logger {
     }
 
     if ($PSCmdlet.ShouldProcess($Path, "Create logger '$LoggerName'")) {
-        Write-Host "Calling logger with WriteToHost '$WriteToHost'"
         $_Loggers[$LoggerName] = [Logger]::new($Path, $ProgramName, $Encoding, $Overwrite, $WriteToHost)
     }
 }
@@ -456,7 +455,7 @@ Write-Log -Level "W" -Message "This is a warning message."
 
 .EXAMPLE
 # Logs an error message along with additional context information.
-$context = [Ordered]@{
+$context = [ordered]@{
     Name = "John Doe"
     Age  = 42
 }
@@ -743,7 +742,6 @@ function Import-Log {
     $entries = @()
     $content | Select-Object -Skip 1 -First $($content.Count - 2) | ForEach-Object { $entries += $_ | ConvertFrom-Json }
     $log | Add-Member -MemberType NoteProperty -Name "entries" -Value $entries
-
 
     return $log
 }
