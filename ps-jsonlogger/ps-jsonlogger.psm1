@@ -28,6 +28,12 @@ enum Levels {
     VERBOSE
 }
 
+enum ConsoleStyles {
+    Simple
+    TimeSpan
+    Timestamp
+}
+
 if ($PSVersionTable.PSVersion.Major -ge 7) {
     $_ValidEncodings = @("ansi", "ascii", "bigendianunicode", "bigendianutf32",
         "oem", "unicode", "utf7", "utf8", "utf8BOM", "utf8NoBOM", "utf32")
@@ -49,27 +55,29 @@ class Logger {
     [string]$ProgramName
     [string]$Encoding
     [bool]$Overwrite
-    [bool]$WriteToHost
+    [string]$WriteToHost
+    [datetime]$StartTime
     [bool]$hasWarning = $false
     [bool]$hasError = $false
 
-    static [string]$JsonLoggerVersion = "1.2.0"
+    static [string]$JsonLoggerVersion = "1.3.0"
     static [hashtable]$ShortLevels = @{
-        "INFO"    = "INF"
-        "SUCCESS" = "SCS"
-        "WARNING" = "WRN"
-        "ERROR"   = "ERR"
-        "FATAL"   = "FTL"
-        "DEBUG"   = "DBG"
-        "VERBOSE" = "VRB"
+        [Levels]::INFO    = "INF"
+        [Levels]::SUCCESS = "SCS"
+        [Levels]::WARNING = "WRN"
+        [Levels]::ERROR   = "ERR"
+        [Levels]::FATAL   = "FTL"
+        [Levels]::DEBUG   = "DBG"
+        [Levels]::VERBOSE = "VRB"
     }
 
-    Logger([string]$path, [string]$programName, [string]$encoding, [bool]$overwrite = $false, [bool]$writeToHost = $false) {
+    Logger([string]$path, [string]$programName, [string]$encoding, [bool]$overwrite = $false, [ConsoleStyles]$WriteToHost) {
+        $this.StartTime = (Get-Date).ToString("o")
         $this.Path = $path
         $this.ProgramName = $programName
         $this.Encoding = $encoding
         $this.Overwrite = $overwrite
-        $this.WriteToHost = $writeToHost
+        $this.WriteToHost = $WriteToHost
 
         if ($this.Overwrite -or -not (Test-Path -Path $this.Path)) {
             New-Item -Path $this.Path -ItemType File -Force | Out-Null
@@ -82,7 +90,7 @@ class Logger {
         }
 
         $initialEntry = [ordered]@{
-            timestamp         = (Get-Date).ToString("o")
+            timestamp         = $this.StartTime
             level             = "START"
             programName       = $this.ProgramName
             PSVersion         = $global:PSVersionTable.PSVersion.ToString()
@@ -93,7 +101,7 @@ class Logger {
             Add-Content -Path $this.Path -Value $initialEntryJson -Encoding $this.Encoding -ErrorAction Stop
 
             if ($this.WriteToHost) {
-                Write-Host "[$($initialEntry.level)][$(Get-Date $initialEntry.timestamp -f "yyyy-MM-dd HH:mm:ss")] $($this.ProgramName)"
+                Write-Host "[$($initialEntry.level) $(Get-Date $initialEntry.timestamp -f "yyyy-MM-dd HH:mm:ss")] $($this.ProgramName)"
             }
         }
         catch {
@@ -121,6 +129,10 @@ class Logger {
         $file | Set-Content -Path $this.Path -Encoding $this.Encoding
     }
 
+    hidden [timespan] GetTimeSinceStart([datetime]$time) {
+        return New-TimeSpan -Start $time -End $this.StartTime
+    }
+
     [void] Log([Levels]$level, [string]$message, [string]$calledFrom, [array]$context, [bool]$includeCallStack) {
         try {
             if ($null -ne $context) {
@@ -143,16 +155,30 @@ class Logger {
         }
 
         Add-Content -Path $this.Path -Value $logEntryJson -Encoding $this.Encoding -ErrorAction Stop
-
+        
         if ($this.WriteToHost) {
+            $console_message = "[$([Logger]::ShortLevels[$level])] $message"
+            $color = "White"
+            
             switch ($level) {
-                "SUCCESS" { Write-Host $logEntry.ToString() -ForegroundColor Green }
-                "WARNING" { Write-Host $logEntry.ToString() -ForegroundColor Yellow }
-                "ERROR" { Write-Host $logEntry.ToString() -ForegroundColor Red }
-                "FATAL" { Write-Host $logEntry.ToString() -ForegroundColor Red }
-                default { Write-Host $logEntry.ToString() }
+                "SUCCESS" { $color = "Green" }
+                "WARNING" { $color = "Yellow" }
+                "ERROR" { $color = "Red" }
+                "FATAL" { $color = "Red" }
             }
+
+            switch ($this.WriteToHost) {
+                "TIMESTAMP" {
+                    $console_message = "[$([Logger]::ShortLevels[$level]) $((Get-Date $logEntry.timestamp).ToString("hh:mm:ss.ff"))] $message"
+                }
+                "TIMESPAN" {
+                    $console_message = "[$([Logger]::ShortLevels[$level]) $($this.GetTimeSinceStart($logEntry.timestamp).ToString("mm\:ss\.ff"))] $message"
+                }
+            }
+
+            Write-Host $console_message -ForegroundColor $color
         }
+
 
         if (-not $this.hasWarning -and $level -eq [Levels]::WARNING) {
             $this.AddToInitialEntry("hasWarning", $true)
@@ -185,7 +211,7 @@ class Logger {
         }
 
         if ($this.WriteToHost) {
-            $friendlyString = "[$($finalEntry.level)][$(Get-Date $finalEntry.timestamp -f "yyyy-MM-dd HH:mm:ss")]"
+            $friendlyString = "[$($finalEntry.level) $(Get-Date $finalEntry.timestamp -f "yyyy-MM-dd HH:mm:ss")]"
             if (-not [string]::IsNullOrEmpty($message)) {
                 $friendlyString += " $message"
             }
@@ -215,10 +241,6 @@ class LogEntry {
         if ($this.level -eq [Levels]::VERBOSE -or $this.level -eq [Levels]::FATAL -or $includeCallStack) {
             $this | Add-Member -MemberType NoteProperty -Name "callStack" -Value ([string](Get-PSCallStack))
         }
-    }
-
-    [string] ToString() {
-        return "[$([Logger]::ShortLevels[$this.level])] $($this.message)"
     }
 }
 
@@ -262,8 +284,14 @@ A switch that, when set, allows overwriting existing log files.
 Default: off
 
 .PARAMETER WriteToHost
-A switch that, when set, allows log messages to be output to the host via the
-Write-Host cmdlet (this is in addition to being written to disk). Default: off
+Enables log messages to be written to the console via the Write-Host cmdlet.
+Supports the following output styles:
+-WriteToHost Simple
+    [LVL] message
+-WriteToHost TimeSpan
+    [LVL mm:ss.ff] message     # Time passed since the logger started
+-WriteToHost Timestamp
+    [LVL hh:mm:ss.ff] message  # Time the log entry was written
 
 .PARAMETER Force
 A switch that, when set, allows the creation of a logger that has the
@@ -309,25 +337,28 @@ https://github.com/BryanCuneo/ps-jsonlogger
 function New-Logger {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
-        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Path,
 
-        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$ProgramName,
 
         [ValidateScript({
                 if ($_ -in $_ValidEncodings) { $true }
-                else { throw "'$_' is not a valid encoding. Please try again with a supported encoding: $($_ValidEncodings -join ", ")" }
+                else { throw "'$_' is not a valid encoding. Please try again: $($_ValidEncodings -join ", ")" }
             })]
         [string]$Encoding,
 
         [ValidateNotNullOrEmpty()]
         [string]$LoggerName = "default",
 
+        [ValidateScript({
+                if ($_ -in [ConsoleStyles].GetEnumNames()) { $true }
+                else { throw "'$_' is not a valid style. Please try again: $([ConsoleStyles].GetEnumNames() -join ", ")" }
+            })]
+        [ConsoleStyles]$WriteToHost,
+
         [switch]$Overwrite,
-        [switch]$WriteToHost,
         [switch]$Force
     )
 
@@ -350,6 +381,11 @@ function New-Logger {
 Register-ArgumentCompleter -CommandName New-Logger -ParameterName Encoding -ScriptBlock {
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
     $_ValidEncodings | Where-Object { $_ -like "$wordToComplete*" }
+}
+
+Register-ArgumentCompleter -CommandName New-Logger -ParameterName WriteToHost -ScriptBlock {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+    [ConsoleStyles].GetEnumNames() | Where-Object { $_ -like "$wordToComplete*" }
 }
 
 <#
@@ -419,7 +455,7 @@ Write-Log -Level "W" -Message "This is a warning message."
 
 .EXAMPLE
 # Logs an error message along with additional context information.
-$context = [Ordered]@{
+$context = [ordered]@{
     Name = "John Doe"
     Age  = 42
 }
@@ -448,46 +484,13 @@ https://github.com/BryanCuneo/ps-jsonlogger
 function Write-Log {
     [CmdletBinding(DefaultParameterSetName = "LevelParam")]
     param(
-        [Parameter(ParameterSetName = "LevelParam")]
-        [Parameter(ParameterSetName = "Info")]
-        [Parameter(ParameterSetName = "Success")]
-        [Parameter(ParameterSetName = "Warning")]
-        [Parameter(ParameterSetName = "Error")]
-        [Parameter(ParameterSetName = "Debug")]
-        [Parameter(ParameterSetName = "Verbose")]
-        [Parameter(ParameterSetName = "Fatal")]
         [Parameter(Mandatory, ValueFromPipeline = $true, Position = 0)]
         [ValidateNotNullOrEmpty()]
         [string]$Message,
 
-        [Parameter(ParameterSetName = "LevelParam")]
-        [Parameter(ParameterSetName = "Info")]
-        [Parameter(ParameterSetName = "Success")]
-        [Parameter(ParameterSetName = "Warning")]
-        [Parameter(ParameterSetName = "Error")]
-        [Parameter(ParameterSetName = "Debug")]
-        [Parameter(ParameterSetName = "Verbose")]
-        [Parameter(ParameterSetName = "Fatal")]
         [array]$Context = $null,
-
-        [Parameter(ParameterSetName = "LevelParam")]
-        [Parameter(ParameterSetName = "Info")]
-        [Parameter(ParameterSetName = "Success")]
-        [Parameter(ParameterSetName = "Warning")]
-        [Parameter(ParameterSetName = "Error")]
-        [Parameter(ParameterSetName = "Debug")]
-        [Parameter(ParameterSetName = "Verbose")]
-        [Parameter(ParameterSetName = "Fatal")]
         [switch]$WithCallStack,
 
-        [Parameter(ParameterSetName = "LevelParam")]
-        [Parameter(ParameterSetName = "Info")]
-        [Parameter(ParameterSetName = "Success")]
-        [Parameter(ParameterSetName = "Warning")]
-        [Parameter(ParameterSetName = "Error")]
-        [Parameter(ParameterSetName = "Debug")]
-        [Parameter(ParameterSetName = "Verbose")]
-        [Parameter(ParameterSetName = "Fatal")]
         [ValidateNotNullOrEmpty()]
         [string]$Logger = "default",
 
@@ -739,7 +742,6 @@ function Import-Log {
     $entries = @()
     $content | Select-Object -Skip 1 -First $($content.Count - 2) | ForEach-Object { $entries += $_ | ConvertFrom-Json }
     $log | Add-Member -MemberType NoteProperty -Name "entries" -Value $entries
-
 
     return $log
 }

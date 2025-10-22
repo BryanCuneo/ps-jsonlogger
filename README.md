@@ -183,13 +183,18 @@ When a log file contains a warning, an error, and/or a fatal entry, the initial 
 
 [Back to the table of contents](#usage-instructions---table-of-contents)
 ## Writing Log Output to the Console
-You can pass the `-WriteToHost` flag to `New-Logger` and write out human-readable versions of the log entries to the console using the `Write-Host` cmdlet (this is in addition to the on-disk log file):
+You can pass the `-WriteToHost <style>` parameter to `New-Logger` and write out human-readable versions of the log entries to the console using the `Write-Host` cmdlet (this is in addition to the on-disk log file). Three styles are supported: `Simple`, `TimeSpan`, and `Timestamp` and the outputs are as follows:
+* **Simple** - The log entry is written to the console as `[LVL] message`
+* **TimeSpan** - Include the amount of time that's passed since the logger started
+* **Timestamp** - Include the timestamp of when the log entry was written
+
+Here's a full example using `-WriteToHost Simple`:
 
 #### write_to_host.ps1
 ```PowerShell
 Import-Module ps-jsonlogger
 
-New-Logger -Path "./write_to_host.log" -ProgramName "Write to Host Example" -WriteToHost
+New-Logger -Path "./write_to_host.log" -ProgramName "Write to Host Example" -WriteToHost Simple
 
 Write-Log -Level "INFO" "Level test - info"
 Write-Log -Level "SUCCESS" "Level test - success"
@@ -202,8 +207,18 @@ Write-Log -Level "FATAL" "For terminating errors, FATAL-level logs will exit the
 Write-Log -Level "DEBUG" "This line will never be logged because the preceeding line exited the program."
 ```
 
-#### Console Output
+#### Console Output - Simple
 <img width="1070" height="237" alt="image" src="https://github.com/user-attachments/assets/bec83455-38ec-469f-8870-6835eeea75b0" />
+
+#### Abridged Console Output - TimeSpan
+```
+[INF 00:00.04] Level test - info
+```
+
+#### Abridged Console Output - Timestamp
+```
+[INF 21:38:34.27] Level test - info
+```
 
 
 
