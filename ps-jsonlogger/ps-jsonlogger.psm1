@@ -485,46 +485,13 @@ https://github.com/BryanCuneo/ps-jsonlogger
 function Write-Log {
     [CmdletBinding(DefaultParameterSetName = "LevelParam")]
     param(
-        [Parameter(ParameterSetName = "LevelParam")]
-        [Parameter(ParameterSetName = "Info")]
-        [Parameter(ParameterSetName = "Success")]
-        [Parameter(ParameterSetName = "Warning")]
-        [Parameter(ParameterSetName = "Error")]
-        [Parameter(ParameterSetName = "Debug")]
-        [Parameter(ParameterSetName = "Verbose")]
-        [Parameter(ParameterSetName = "Fatal")]
         [Parameter(Mandatory, ValueFromPipeline = $true, Position = 0)]
         [ValidateNotNullOrEmpty()]
         [string]$Message,
 
-        [Parameter(ParameterSetName = "LevelParam")]
-        [Parameter(ParameterSetName = "Info")]
-        [Parameter(ParameterSetName = "Success")]
-        [Parameter(ParameterSetName = "Warning")]
-        [Parameter(ParameterSetName = "Error")]
-        [Parameter(ParameterSetName = "Debug")]
-        [Parameter(ParameterSetName = "Verbose")]
-        [Parameter(ParameterSetName = "Fatal")]
         [array]$Context = $null,
-
-        [Parameter(ParameterSetName = "LevelParam")]
-        [Parameter(ParameterSetName = "Info")]
-        [Parameter(ParameterSetName = "Success")]
-        [Parameter(ParameterSetName = "Warning")]
-        [Parameter(ParameterSetName = "Error")]
-        [Parameter(ParameterSetName = "Debug")]
-        [Parameter(ParameterSetName = "Verbose")]
-        [Parameter(ParameterSetName = "Fatal")]
         [switch]$WithCallStack,
 
-        [Parameter(ParameterSetName = "LevelParam")]
-        [Parameter(ParameterSetName = "Info")]
-        [Parameter(ParameterSetName = "Success")]
-        [Parameter(ParameterSetName = "Warning")]
-        [Parameter(ParameterSetName = "Error")]
-        [Parameter(ParameterSetName = "Debug")]
-        [Parameter(ParameterSetName = "Verbose")]
-        [Parameter(ParameterSetName = "Fatal")]
         [ValidateNotNullOrEmpty()]
         [string]$Logger = "default",
 
