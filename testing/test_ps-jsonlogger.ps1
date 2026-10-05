@@ -18,6 +18,12 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+
+param( 
+    [ValidateSet("Simple", "TimeSpan", "Timestamp")]
+    [string]$WriteToHost
+)
+
 Import-Module "../ps-jsonlogger/ps-jsonlogger.psm1" -Force
 
 class Ctx {
@@ -112,7 +118,13 @@ function Test-Fatal {
 }
 
 function main {
-    New-Logger -Path "./out/testing.log" -ProgramName "Test Script for ps-jsonlogger" -Overwrite -WriteToHost TimeSpan
+    if ($WriteToHost) {
+        New-Logger -Path "./out/testing.log" -ProgramName "Test Script for ps-jsonlogger" -Overwrite -WriteToHost $WriteToHost
+    }
+    else {
+        New-Logger -Path "./out/testing.log" -ProgramName "Test Script for ps-jsonlogger" -Overwrite
+    }
+    
     Test-Info
     Test-Success
     Test-Warning

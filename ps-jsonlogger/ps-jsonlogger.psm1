@@ -71,7 +71,7 @@ class Logger {
         [Levels]::VERBOSE = "VRB"
     }
 
-    Logger([string]$path, [string]$programName, [string]$encoding, [bool]$overwrite = $false, [ConsoleStyles]$WriteToHost) {
+    Logger([string]$path, [string]$programName, [string]$encoding, [bool]$overwrite = $false, [System.Nullable[ConsoleStyles]]$WriteToHost = $null) {
         $this.StartTime = (Get-Date).ToString("o")
         $this.Path = $path
         $this.ProgramName = $programName
